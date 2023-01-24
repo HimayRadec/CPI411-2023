@@ -9,8 +9,7 @@ struct VertexPositionTexture {
 	float2 TextureCoordinate : TEXCOORD;
 };
 
-VertexPositionTexture MyVertexShader(VertexPositionTexture input)
-{
+VertexPositionTexture MyVertexShader(VertexPositionTexture input) {
 	return input;
 }
 
@@ -19,11 +18,10 @@ float4 MyPixelShader(VertexPositionTexture input) : COLOR
 	return tex2D(mySampler, input.TextureCoordinate);
 }
 
-technique MyTechnique
-{
+technique MyTechnique {
 	pass Pass1
 	{
-		VertexShader = compile vs_4_0 VertexPositionTexture();
+		VertexShader = compile vs_4_0 MyVertexShader();
 		PixelShader = compile ps_4_0 MyPixelShader();
 	}
 }
