@@ -4,16 +4,27 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Lab01
 {
-    public class Game1 : Game
+    public class Lab01 : Game
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
-        public Game1()
+        // My Code
+        Effect effect;
+        VertexPositionTexture[] vertices =
+        {
+            new VertexPositionTexture(new Vector3(0, 1, 0), new Vector2(1,0.5f)),
+            new VertexPositionTexture(new Vector3(1, 0, 0), new Vector2(0,-1)),
+            new VertexPositionTexture(new Vector3(-1, 0, 0), new Vector2(0,1))
+        };
+
+        public Lab01()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+
+            _graphics.GraphicsProfile = GraphicsProfile.HiDef;
         }
 
         protected override void Initialize()
@@ -28,6 +39,8 @@ namespace Lab01
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
+            effect = Content.Load<Effect>("SimplestShader");
+            effect.Parameters["MyTexture"].SetValue(Content.Load<Texture2D>("logo_mg"));
         }
 
         protected override void Update(GameTime gameTime)
@@ -44,9 +57,20 @@ namespace Lab01
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
+            //Allows Opacity/Blending?
 
-            base.Draw(gameTime);
+            GraphicsDevice.BlendState = BlendState.AlphaBlend;
+
+            // TODO: Add your drawing code here
+            foreach (var pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                GraphicsDevice.DrawUserPrimitives<VertexPositionTexture>(
+                //GraphicsDevice.DrawUserPrimitives<VertexPositionColor>(
+                  PrimitiveType.TriangleList, vertices, 0, vertices.Length / 3);
+            }
+
+                base.Draw(gameTime);
         }
     }
 }
