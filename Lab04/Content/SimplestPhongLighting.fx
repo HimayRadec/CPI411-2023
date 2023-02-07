@@ -71,7 +71,7 @@ technique MyTechnique
 	}
 };
 
-// PHONG PIXEL SHADER
+// TOON PIXEL SHADER
 VertexShaderOutput PhongVertexShaderFunction(VertexInput input)
 {
 	VertexShaderOutput output;
@@ -108,5 +108,52 @@ technique Phong
 	{
 		VertexShader = compile vs_4_0 PhongVertexShaderFunction();
 		PixelShader = compile ps_4_0 PhongPixelShaderFunction();
+	}
+};
+
+VertexShaderOutput ToonVertexShaderFunction(VertexInput input)
+{
+	VertexShaderOutput output;
+	float4 worldPosition = mul(input.Position, World);
+	float4 viewPosition = mul(worldPosition, View);
+	output.Position = mul(viewPosition, Projection);
+	output.WorldPosition = worldPosition;
+	output.Normal = mul(input.Normal, WorldInverseTranspose);
+	output.Color = 0;
+
+	return output;
+}
+float4 ToonPixelShaderFunction(VertexShaderOutput input) : COLOR0
+{
+
+	float3 N = normalize(input.Normal.xyz);
+	float3 V = normalize(CameraPosition - input.WorldPosition.xyz);
+	float3 L = normalize(LightPosition);
+	float3 R = reflect(-L, N);
+	float D = dot(V, R);
+	if (D < -0.7)
+	{
+		return float4(0, 0, 0, 1);
+	}
+	else if (D < 0.2)
+	{
+		return float4(0.25, 0.25, 0.25, 1);
+	}
+	else if (D < 0.97)
+	{
+		return float4(0.5, 0.5, 0.5, 1);
+	}
+	else
+	{
+		return float4(1, 1, 1, 1);
+	}
+}
+
+technique Toon
+{
+	pass pass1
+	{
+		VertexShader = compile vs_4_0 ToonVertexShaderFunction();
+		PixelShader = compile ps_4_0 ToonPixelShaderFunction();
 	}
 };

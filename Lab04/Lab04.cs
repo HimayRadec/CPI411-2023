@@ -68,13 +68,17 @@ namespace Lab04
             // TODO: Add your update logic here
 
             // Swap between shaders
-            if (Keyboard.GetState().IsKeyDown(Keys.D0))
+            if (Keyboard.GetState().IsKeyDown(Keys.D1))
             {
                 currentShader = 0;
             }
-            if (Keyboard.GetState().IsKeyDown(Keys.D1))
+            if (Keyboard.GetState().IsKeyDown(Keys.D2))
             {
                 currentShader = 1;
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.D3))
+            {
+                currentShader = 2;
             }
 
             MouseState currentMouseState = Mouse.GetState();
