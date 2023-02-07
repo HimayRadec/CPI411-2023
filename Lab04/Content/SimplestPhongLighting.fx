@@ -89,7 +89,7 @@ float4 PhongPixelShaderFunction(VertexShaderOutput input) : COLOR0
 
 	float3 N = normalize(input.Normal.xyz);
 	float3 V = normalize(CameraPosition - input.WorldPosition.xyz);
-	float3 L = normalize(LightPosition - input.WorldPosition.xyz);
+	float3 L = normalize(LightPosition);
 	float3 R = reflect(-L, N);
 
 	float4 ambient = AmbientColor * AmbientIntensity;

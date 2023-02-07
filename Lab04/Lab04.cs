@@ -11,6 +11,7 @@ namespace Lab04
 
         // Lab04
         Vector4 specularColor = new Vector4(1, 1, 1, 1);
+        int currentShader = 0;
 
         // Lab03
         Model model; 
@@ -66,6 +67,16 @@ namespace Lab04
 
             // TODO: Add your update logic here
 
+            // Swap between shaders
+            if (Keyboard.GetState().IsKeyDown(Keys.D0))
+            {
+                currentShader = 0;
+            }
+            if (Keyboard.GetState().IsKeyDown(Keys.D1))
+            {
+                currentShader = 1;
+            }
+
             MouseState currentMouseState = Mouse.GetState();
 
             // Movement with mouse
@@ -109,7 +120,7 @@ namespace Lab04
 
             // TODO: Add your drawing code here
 
-            effect.CurrentTechnique = effect.Techniques[0];
+            effect.CurrentTechnique = effect.Techniques[currentShader];
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 foreach (ModelMesh mesh in model.Meshes)
