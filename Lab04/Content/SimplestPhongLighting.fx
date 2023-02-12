@@ -38,7 +38,7 @@ struct VertexShaderOutput
 };
 
 
-// ?? Difference between pixel and vertex shader ??
+// GOURAND VERTEX SHADER
 VertexShaderOutput GourandVertexShaderFunction(VertexInput input)
 {
 	VertexShaderOutput output;
@@ -61,7 +61,6 @@ float4 GourandPixelShaderFunction(VertexShaderOutput input) : COLOR
 {
 	return input.Color;
 }
-
 technique MyTechnique
 {
 	pass pass1
@@ -71,7 +70,7 @@ technique MyTechnique
 	}
 };
 
-// TOON PIXEL SHADER
+// PHONG PIXEL SHADER
 VertexShaderOutput PhongVertexShaderFunction(VertexInput input)
 {
 	VertexShaderOutput output;
@@ -101,7 +100,6 @@ float4 PhongPixelShaderFunction(VertexShaderOutput input) : COLOR0
 	color.a = 1;
 	return color;
 }
-
 technique Phong
 {
 	pass pass1
@@ -111,6 +109,7 @@ technique Phong
 	}
 };
 
+// TOON PIXEL SHADER
 VertexShaderOutput ToonVertexShaderFunction(VertexInput input)
 {
 	VertexShaderOutput output;
@@ -148,7 +147,6 @@ float4 ToonPixelShaderFunction(VertexShaderOutput input) : COLOR0
 		return float4(1, 1, 1, 1);
 	}
 }
-
 technique Toon
 {
 	pass pass1
