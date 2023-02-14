@@ -67,20 +67,23 @@ namespace Lab04
 
             // TODO: Add your update logic here
 
-            // Swap between shaders
-            if (Keyboard.GetState().IsKeyDown(Keys.D1))
+            #region - Swap Shaders -
+            if (Keyboard.GetState().IsKeyDown(Keys.F1)) // Gourand Vertex
             {
                 currentShader = 0;
             }
-            if (Keyboard.GetState().IsKeyDown(Keys.D2))
+            if (Keyboard.GetState().IsKeyDown(Keys.F2)) // Phong Pixel
             {
                 currentShader = 1;
             }
-            if (Keyboard.GetState().IsKeyDown(Keys.D3))
+            if (Keyboard.GetState().IsKeyDown(Keys.F3)) // Toon 
             {
                 currentShader = 2;
             }
 
+            #endregion
+
+            #region - Camera Controls -
             MouseState currentMouseState = Mouse.GetState();
 
             // Movement with mouse
@@ -91,6 +94,8 @@ namespace Lab04
             }
 
             preMouseState = currentMouseState;
+
+            #endregion
 
             /*
             world = Matrix.Identity;
