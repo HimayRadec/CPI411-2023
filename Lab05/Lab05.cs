@@ -36,6 +36,9 @@ namespace Lab05
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+
+            _graphics.GraphicsProfile = GraphicsProfile.HiDef;
+
         }
 
         protected override void Initialize()
@@ -83,6 +86,10 @@ namespace Lab05
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
+            RasterizerState rasterizerState = new RasterizerState();
+            rasterizerState.CullMode = CullMode.None;
+            GraphicsDevice.RasterizerState = rasterizerState;
+            GraphicsDevice.RasterizerState = rasterizerState;
 
             skybox.Draw(view, projection, cameraPosition);
 
