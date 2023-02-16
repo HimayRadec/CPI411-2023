@@ -14,6 +14,7 @@ namespace CPI411.SimpleEngine
         public Skybox(string[] skyboxTextures, ContentManager Content, GraphicsDevice g)
         {
             skyBox = Content.Load<Model>("skybox/cube");
+            // "skybox/Skybox
             skyBoxEffect = Content.Load<Effect>("Skybox");
             skyBoxTexture = new TextureCube(g, 512, false, SurfaceFormat.Color);
             byte[] data = new byte[512 * 512 * 4];
