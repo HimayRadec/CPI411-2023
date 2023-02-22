@@ -36,8 +36,8 @@ struct VertexShaderInput // edit
 struct VertexShaderOutput // edit
 {
 	float4 Position : POSITION0;
-	float3 TexCoord : TEXCOORD;
-	float3 Reflection : TEXCOORD1;
+	float2 TexCoord : TEXCOORD;
+	float3 R : TEXCOORD1;
 
 };
 
@@ -51,7 +51,7 @@ VertexShaderOutput ReflectionVertexShader(VertexShaderInput input)
 
 	float3 N = mul(input.Normal, WorldInverseTranspose).xyz;
 	float3 I = normalize(worldPos.xyz - CameraPosition);
-	output.R = reflect(I, N)
+	output.R = reflect(I, N);
 
 	return output;
 }
@@ -59,7 +59,9 @@ VertexShaderOutput ReflectionVertexShader(VertexShaderInput input)
 float4 ReflectionPixelShader(VertexShaderOutput input) : COLOR0
 {
 
-	return texCUBE(SkyBoxSampler, input.R);
+	float4 reflectedColor = texCUBE(SkyBoxSampler, input.R);
+	float4 decalColor = tex2D(tsampler1, input.texCoord);
+	return lerp(decalColor, reflectedColor, 0.5);
 }
 
 technique Reflection
