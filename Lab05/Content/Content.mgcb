@@ -36,7 +36,7 @@
 /processorParam:Scale=1
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
-/build:skybox/cube.fbx
+/build:skybox/cube.fbx;skybox/skybox.fbx
 
 #begin skybox/SunsetPNG1.png
 /importer:TextureImporter
