@@ -21,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lab06", "Lab06\Lab06.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lab07", "Lab07\Lab07.csproj", "{CD3965F3-1EA4-4195-A717-94996C3DE66E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lab08Image", "Lab08Image\Lab08Image.csproj", "{104DF174-88CB-49E9-9F50-B8CB5D4CBE18}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lab08Image", "Lab08Image\Lab08Image.csproj", "{104DF174-88CB-49E9-9F50-B8CB5D4CBE18}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
