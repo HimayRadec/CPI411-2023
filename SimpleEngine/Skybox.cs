@@ -1,7 +1,12 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Content;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using Microsoft.Xna.Framework.Content; // *** import Content class
 
 namespace CPI411.SimpleEngine
 {
@@ -10,46 +15,33 @@ namespace CPI411.SimpleEngine
         private Model skyBox;
         public TextureCube skyBoxTexture;
         private Effect skyBoxEffect;
-        private float size = 50f; //Can make larger if I want
-
-
-        //Constructor
-        public Skybox(string[] skyboxTextures, int dim, ContentManager Content, GraphicsDevice g)
+        private float size = 100f; // *** Changed to 100!!!
+        public Skybox(string[] skyboxTextures, ContentManager Content, GraphicsDevice g)
         {
-            //Make these arguments part of constructor in the future to make it reusible.
-            skyBox = Content.Load<Model>("cube"); //"skybox/cube" use sub-folders!
-            skyBoxEffect = Content.Load<Effect>("skybox");
+            skyBox = Content.Load<Model>("skybox/cube"); // *** Project should have a skybox/cube.fbx
+            skyBoxEffect = Content.Load<Effect>("Skybox"); //*** Project should have Skybox.fx
 
+            skyBoxTexture = new TextureCube(g, 512, false, SurfaceFormat.Color);
+            byte[] data = new byte[512 * 512 * 4];
 
-
-            skyBoxTexture = new TextureCube(g, dim, false, SurfaceFormat.Color);
-            byte[] data = new byte[dim * dim * 4]; //512 x 514 for the image, x4 for rgba data.
-
-            //This assigns all 6 faces of the skybox.
             Texture2D tempTexture = Content.Load<Texture2D>(skyboxTextures[0]);
-            tempTexture.GetData<byte>(data); //All pixel data is stored into byte array data
+            tempTexture.GetData<byte>(data);
             skyBoxTexture.SetData<byte>(CubeMapFace.NegativeX, data);
-
             tempTexture = Content.Load<Texture2D>(skyboxTextures[1]);
             tempTexture.GetData<byte>(data);
             skyBoxTexture.SetData<byte>(CubeMapFace.PositiveX, data);
-
             tempTexture = Content.Load<Texture2D>(skyboxTextures[2]);
             tempTexture.GetData<byte>(data);
             skyBoxTexture.SetData<byte>(CubeMapFace.NegativeY, data);
-
             tempTexture = Content.Load<Texture2D>(skyboxTextures[3]);
             tempTexture.GetData<byte>(data);
             skyBoxTexture.SetData<byte>(CubeMapFace.PositiveY, data);
-
             tempTexture = Content.Load<Texture2D>(skyboxTextures[4]);
             tempTexture.GetData<byte>(data);
             skyBoxTexture.SetData<byte>(CubeMapFace.NegativeZ, data);
-
             tempTexture = Content.Load<Texture2D>(skyboxTextures[5]);
             tempTexture.GetData<byte>(data);
             skyBoxTexture.SetData<byte>(CubeMapFace.PositiveZ, data);
-
         }
         public void Draw(Matrix view, Matrix projection, Vector3 cameraPosition)
         {
@@ -62,18 +54,16 @@ namespace CPI411.SimpleEngine
                     {
                         part.Effect = skyBoxEffect;
                         part.Effect.Parameters["World"].SetValue(
-                            Matrix.CreateScale(size) *
-                            Matrix.CreateTranslation(cameraPosition));
-
+                        Matrix.CreateScale(size) * Matrix.CreateTranslation(cameraPosition));
                         part.Effect.Parameters["View"].SetValue(view);
                         part.Effect.Parameters["Projection"].SetValue(projection);
                         part.Effect.Parameters["SkyBoxTexture"].SetValue(skyBoxTexture);
                         part.Effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+
                     }
-                    mesh.Draw(); //Built-in draw method for monogame.
+                    mesh.Draw();
                 }
             }
         }
     }
 }
-    

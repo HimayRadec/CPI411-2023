@@ -1,4 +1,6 @@
-﻿float4x4 World;
+﻿// *** Skybox for Lab5
+
+float4x4 World;
 float4x4 View;
 float4x4 Projection;
 float3 CameraPosition;
@@ -7,44 +9,42 @@ Texture SkyBoxTexture;
 samplerCUBE SkyBoxSampler = sampler_state
 {
 	texture = <SkyBoxTexture>;
-	magfilter = LINEAR;
+	/*magfilter = LINEAR;
 	minfilter = LINEAR;
 	mipfilter = LINEAR;
-
 	AddressU = Mirror;
-	AddressV = Mirror;
+	AddressV = Mirror;*/
 };
-
-struct VertexShaderInput {
+struct VertexInput {
+	float4 Position: POSITION0;
+};
+struct VertexOutput {
 	float4 Position : POSITION0;
+	float3 TextureCoordinate: TEXCOORD0;
 };
 
-struct VertexShaderOutput {
-	float4 Position : POSITION0;
-	float3 TextureCoordinate : COORDINATE0;
-};
-
-VertexShaderOutput MyVertexShader(VertexShaderOutput input)
+VertexOutput VS(VertexInput input)
 {
-	VertexShaderOutput output;
+	VertexOutput output;
 	float4 worldPos = mul(input.Position, World);
 	float4 viewPos = mul(worldPos, View);
-	output.Position = mul(viewPos, Projection);
-	output.TextureCoordinate = worldPos.xyz - CameraPosition;
+	float4 projPos = mul(viewPos, Projection);
+	output.Position = projPos;
+
+	float4 vertexPos = mul(input.Position, World);
+	output.TextureCoordinate = vertexPos.xyz - CameraPosition;
 
 	return output;
 }
-
-float4 MyPixelShader(VertexShaderOutput input) : COLOR
+float4 PS(VertexOutput input)  : COLOR0
 {
 	return texCUBE(SkyBoxSampler, normalize(input.TextureCoordinate));
 }
 
-technique MyTechnique
-{
-	pass Pass1
-	{
-		VertexShader = compile vs_4_0 MyVertexShader();
-		PixelShader = compile ps_4_0 MyPixelShader();
+technique Skybox {
+	pass Pass1 {
+		VertexShader = compile vs_4_0 VS();
+		PixelShader = compile ps_4_0 PS();
 	}
-};
+}
+

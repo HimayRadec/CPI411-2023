@@ -6,41 +6,41 @@ using CPI411.SimpleEngine;
 
 namespace Lab05
 {
+    /// <summary>
+    /// This is the main type for your game.
+    /// </summary>
     public class Lab05 : Game
     {
-        private GraphicsDeviceManager _graphics;
-        private SpriteBatch _spriteBatch;
+        GraphicsDeviceManager graphics;
+        SpriteBatch spriteBatch;
 
-        float xSensitivity = 0.01f;
-        float ySensitivity = 0.01f;
-        float angle;
-        float angle2;
+        //*** Lab 5
+        Effect effect;
+        Model model;
+        Texture2D texture;
 
-        Matrix view;
-        Matrix world;
-        Matrix projection;
-        Vector3 cameraPosition;
-
-        Skybox skybox;
-        string[] skyboxTextures = {
-                "skybox/SunsetPNG1",
-                "skybox/SunsetPNG2",
-                "skybox/SunsetPNG3",
-                "skybox/SunsetPNG4",
-                "skybox/SunsetPNG5",
-                "skybox/SunsetPNG6"
-            };  
+        Skybox skybox; // *** Go to the References and add the SimpleEngine
+        Matrix world = Matrix.Identity;
+        Matrix view = Matrix.CreateLookAt(new Vector3(0, 0, 20), Vector3.Zero, Vector3.Up);
+        Matrix projection = Matrix.CreatePerspectiveFieldOfView(
+            MathHelper.ToRadians(90), 800f / 600f, 0.01f, 1000f);
+        Vector3 cameraPosition = new Vector3(0, 0, 20);
+        float angle, angle2;
+        MouseState previousMouseState;
 
         public Lab05()
         {
-            _graphics = new GraphicsDeviceManager(this);
+            graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            IsMouseVisible = true;
-
-            _graphics.GraphicsProfile = GraphicsProfile.HiDef;
-
+            graphics.GraphicsProfile = GraphicsProfile.HiDef;
         }
 
+        /// <summary>
+        /// Allows the game to perform any initialization it needs to before starting to run.
+        /// This is where it can query for any required services and load any non-graphic
+        /// related content.  Calling base.Initialize will enumerate through any components
+        /// and initialize them as well.
+        /// </summary>
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
@@ -48,48 +48,80 @@ namespace Lab05
             base.Initialize();
         }
 
+        /// <summary>
+        /// LoadContent will be called once per game and is the place to load
+        /// all of your content.
+        /// </summary>
         protected override void LoadContent()
         {
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            // Create a new SpriteBatch, which can be used to draw textures.
+            spriteBatch = new SpriteBatch(GraphicsDevice);
 
-
-
-            skybox = new Skybox(skyboxTextures, Content, _graphics.GraphicsDevice);
+            string[] skyboxTextures =
+            {
+                "skybox/SunsetPNG2", "skybox/SunsetPNG1",
+                "skybox/SunsetPNG4", "skybox/SunsetPNG3",
+                "skybox/SunsetPNG6", "skybox/SunsetPNG5"
+            };
+            skybox = new Skybox(skyboxTextures, Content, GraphicsDevice);
         }
 
+        /// <summary>
+        /// UnloadContent will be called once per game and is the place to unload
+        /// game-specific content.
+        /// </summary>
+        protected override void UnloadContent()
+        {
+            // TODO: Unload any non ContentManager content here
+        }
+
+        /// <summary>
+        /// Allows the game to run logic such as updating the world,
+        /// checking for collisions, gathering input, and playing audio.
+        /// </summary>
+        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // TODO: Add your update logic here
-            world = Matrix.Identity;
-            cameraPosition = Vector3.Transform(
-                new Vector3(0, 0, 20),
-                Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle)
-                );
-            view = Matrix.CreateLookAt(
-                cameraPosition,
-                new Vector3(),
-                Vector3.Up
-                );
-            projection = Matrix.CreatePerspectiveFieldOfView(
-                MathHelper.ToRadians(90),
-                1.33f,
-                0.1f,
-                100
-                );
+            // ***********************************************
+            MouseState currentMouseState = Mouse.GetState();
+            //************************************************
+            if (currentMouseState.LeftButton == ButtonState.Pressed &&
+                previousMouseState.LeftButton == ButtonState.Pressed)
+            {
+                angle -= (previousMouseState.X - currentMouseState.X) / 100f;
+                angle2 -= (previousMouseState.Y - currentMouseState.Y) / 100f;
+            }
+
+
+            cameraPosition = Vector3.Transform(Vector3.Zero,
+                Matrix.CreateTranslation(new Vector3(0, 0, 20)) *
+                Matrix.CreateRotationX(angle2) *
+                Matrix.CreateRotationY(angle));
+            view = Matrix.CreateRotationY(angle) * Matrix.CreateRotationX(angle2) *
+                Matrix.CreateTranslation(-cameraPosition);
+            // **************************************************
+            previousMouseState = currentMouseState;
+            //***************************************************
 
             base.Update(gameTime);
         }
 
+        /// <summary>
+        /// This is called when the game should draw itself.
+        /// </summary>
+        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            RasterizerState rasterizerState = new RasterizerState();
-            rasterizerState.CullMode = CullMode.None;
-            GraphicsDevice.RasterizerState = rasterizerState;
-            GraphicsDevice.RasterizerState = rasterizerState;
+            GraphicsDevice.BlendState = BlendState.Opaque;
+            GraphicsDevice.DepthStencilState = new DepthStencilState();
+
+            RasterizerState ras = new RasterizerState();
+            ras.CullMode = CullMode.None;
+            GraphicsDevice.RasterizerState = ras;
 
             skybox.Draw(view, projection, cameraPosition);
 
