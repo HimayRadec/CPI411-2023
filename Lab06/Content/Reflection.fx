@@ -8,67 +8,62 @@ texture environmentMap;
 
 sampler tsampler1 = sampler_state {
 	texture = <decalMap>;
-	magfilter = LINEAR;
+	/*magfilter = LINEAR;
 	minfilter = LINEAR;
 	mipfilter = LINEAR;
 	AddressU = Wrap;
-	AddressV = Wrap;
+	AddressV = Wrap;*/
 };
-
 samplerCUBE SkyBoxSampler = sampler_state
 {
 	texture = <environmentMap>;
-	magfilter = LINEAR;
+	/*magfilter = LINEAR;
 	minfilter = LINEAR;
 	mipfilter = LINEAR;
 	AddressU = Mirror;
-	AddressV = Mirror;
+	AddressV = Mirror;*/
 };
 
-
-struct VertexShaderInput // edit
+struct VertexShaderInput
 {
-	float4 Position : POSITION0;
-	float4 TexCoord : TEXCOORD;
-	float3 Normal : NORMAL0;
+	float4 Position: POSITION0;
+	float2 texCoord: TEXCOORD0;
+	float4 normal: NORMAL0;
+};
+struct VertexShaderOutput
+{
+	float4 Position: POSITION0;
+	float2 texCoord: TEXCOORD0;
+	float3 R: TEXCOORD1; // *** Reflectoin Vector
 };
 
-struct VertexShaderOutput // edit
-{
-	float4 Position : POSITION0;
-	float2 TexCoord : TEXCOORD;
-	float3 R : TEXCOORD1;
-
-};
-
-VertexShaderOutput ReflectionVertexShader(VertexShaderInput input)
-{
+VertexShaderOutput ReflectionVertexShaderFunction(VertexShaderInput input) {
 	VertexShaderOutput output;
-	float4 worldPos = mul(input.Position, World);
-	float4 viewPos = mul(worldPos, View);
-	output.Position = mul(viewPos, Projection);
-	output.TexCoord = input.TexCoord;
 
-	float3 N = mul(input.Normal, WorldInverseTranspose).xyz;
-	float3 I = normalize(worldPos.xyz - CameraPosition);
+	float4 worldPosition = mul(input.Position, World);
+	float4 viewPosition = mul(worldPosition, View);
+	float4 projPosition = mul(viewPosition, Projection);
+	output.Position = projPosition;
+
+	float3 N = normalize( mul(input.normal, WorldInverseTranspose).xyz );
+	float3 I = normalize(worldPosition.xyz - CameraPosition);
 	output.R = reflect(I, N);
-
+	output.texCoord = input.texCoord;
+	
 	return output;
 }
 
-float4 ReflectionPixelShader(VertexShaderOutput input) : COLOR0
+float4 ReflectionPixelShaderFunction(VertexShaderOutput input): COLOR0
 {
-
 	float4 reflectedColor = texCUBE(SkyBoxSampler, input.R);
 	float4 decalColor = tex2D(tsampler1, input.texCoord);
-	return lerp(decalColor, reflectedColor, 0.5);
+	return lerp(decalColor, reflectedColor, 0.9);
+	//return reflectedColor;
 }
 
-technique Reflection
-{
-	pass pass1
-	{
-		VertexShader = compile vs_4_0 ReflectionVertexShader();
-		PixelShader = compile ps_4_0 ReflectionPixelShader();
+technique Reflection {
+	pass Pass1 {
+		VertexShader = compile vs_4_0 ReflectionVertexShaderFunction();
+		PixelShader = compile ps_4_0 ReflectionPixelShaderFunction();
 	}
-};
+}
