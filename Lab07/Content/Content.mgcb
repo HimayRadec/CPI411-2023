@@ -19,7 +19,7 @@
 /processorParam:DebugMode=Auto
 /build:BumpMap.fx
 
-#begin NormalMap/art.PNG
+#begin NormalMaps/art.PNG
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -29,9 +29,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:NormalMap/art.PNG
+/build:NormalMaps/art.PNG
 
-#begin NormalMap/BumpTest.png
+#begin NormalMaps/BumpTest.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -41,9 +41,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:NormalMap/BumpTest.png
+/build:NormalMaps/BumpTest.png
 
-#begin NormalMap/crossHatch.png
+#begin NormalMaps/crossHatch.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -53,9 +53,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:NormalMap/crossHatch.png
+/build:NormalMaps/crossHatch.png
 
-#begin NormalMap/monkey.png
+#begin NormalMaps/monkey.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -65,9 +65,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:NormalMap/monkey.png
+/build:NormalMaps/monkey.png
 
-#begin NormalMap/nm.dds
+#begin NormalMaps/nm.dds
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -77,9 +77,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:NormalMap/nm.dds
+/build:NormalMaps/nm.dds
 
-#begin NormalMap/round.png
+#begin NormalMaps/round.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -89,9 +89,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:NormalMap/round.png
+/build:NormalMaps/round.png
 
-#begin NormalMap/saint.png
+#begin NormalMaps/saint.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -101,9 +101,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:NormalMap/saint.png
+/build:NormalMaps/saint.png
 
-#begin NormalMap/science.PNG
+#begin NormalMaps/science.PNG
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -113,9 +113,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:NormalMap/science.PNG
+/build:NormalMaps/science.PNG
 
-#begin NormalMap/square.png
+#begin NormalMaps/square.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -125,7 +125,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:NormalMap/square.png
+/build:NormalMaps/square.png
 
 #begin Plane.FBX
 /importer:FbxImporter

@@ -9,7 +9,7 @@ float3 CameraPosition;
 float3 LightPosition;
 
 // Light Uniforms
-float AmbientColor;
+float4 AmbientColor;
 float AmbientIntensity;
 
 float4 DiffuseColor;
@@ -91,45 +91,14 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
 
-	// Vectors: L = Light; V = View; N = Normal; T = Tangent; B = Binormal; H = Halfway between L and V
-	float3 L = normalize(LightPosition - input.Position3D);
-	float3 V = normalize(CameraPosition - input.Position3D);
-	float3 N = normalize(input.Normal);
-	float3 T = normalize(input.Tangent);
-	float3 B = normalize(input.Binormal);
-	float3 H = normalize(L + V);
-
-	// Calculate the normal, including the information in the bump map
-	float3 normalTex = tex2D(tsampler1, input.TexCoord).xyz;
-	normalTex = 1.0 * 2.0 * (normalTex - float3(0.5, 0.5, 0.5)); //expand(normalTex);
-
-	// *** Lab7 ********
-	//float3 bumpNormal = normalize(N + (normalTex.x * T + normalTex.y * B));
-
-	// (Lab7 Option MonoGame3.4) 
-	// If does not work, use the OPTION-A
-	//float3 bumpNormal = normalize(N + (normalTex.x * float3(1, 0, 0) + normalTex.y * float3(0, 1, 0))); // OPTION A
+    float3 N = input.Normal;
+	float3 V = normalize(CameraPosition - input.Position3D.xyz);
+    float3 L = normalize(LightPosition - input.Position3D.xyz);
+    float3 R = reflect(-L, N);
 	
-	// *** for Assignment3 ***
-	float3x3 TangentToWorld;
-
-	TangentToWorld[0] = (input.Tangent);
-	TangentToWorld[1] = (input.Binormal);
-	TangentToWorld[2] = (input.Normal);
-
-	float3 bumpNormal = mul(normalTex, TangentToWorld);
-
-	//calculate Diffuse Term:
-	float4 diffuse = DiffuseColor * DiffuseIntensity * max(0, (dot(bumpNormal, L)));
-	diffuse.a = 1.0;
-
-	// calculate Specular Term (H,N):
-	float4 specular = SpecularColor * SpecularIntensity * pow(saturate(dot(H, bumpNormal)), Shininess);
-	specular.a = 1.0;
-
-	// Compute Final Color
-	float4 finalColor = diffuse + specular; //ambient + diffuse + specular;
-	return finalColor;
+    float4 color = tex2D(tsampler1, input.TexCoord);
+    return color;
+	
 }
 
 technique Technique1

@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
+
 namespace Lab07
 {
     public class Lab07 : Game
@@ -46,10 +47,10 @@ namespace Lab07
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            // font = Content.Load<SpriteFont>("font");
+            //font = Content.Load<SpriteFont>("font");
             model = Content.Load<Model>("Plane");
             effect = Content.Load<Effect>("BumpMap");
-            texture = Content.Load<Texture2D>("NormalMap/round");
+            texture = Content.Load<Texture2D>("NormalMaps/round");
         }
 
         protected override void UnloadContent() { }
