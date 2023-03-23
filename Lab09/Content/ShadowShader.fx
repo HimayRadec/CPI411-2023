@@ -40,8 +40,8 @@ float4 ShadowedScenePixelShader(ShadowedSceneVertexShaderOutput input) : COLOR0
 {
 	float4 projTexCoord = input.Pos2DAsSeenByLight / input.Pos2DAsSeenByLight.w;
 	projTexCoord.xy = 0.5 * projTexCoord.xy + float2(0.5, 0.5);
-	projTexCoord.y = 1.0 - projTexCoord.y;
-	float realDistance = 1 – projTexCoord.z;
+	projTexCoord.y = 1.0- projTexCoord.y;
+	float realDistance = 1- projTexCoord.z;
 	
 	float3 N = normalize(input.Normal);
 	float3 L = normalize(LightPosition - input.WorldPosition.xyz);
