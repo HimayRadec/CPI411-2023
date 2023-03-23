@@ -29,10 +29,8 @@ ShadowedSceneVertexShader(ShadowedSceneVertexShaderInput input)
 	ShadowedSceneVertexShaderOutput output;
 	float4 worldPosition = mul(input.Position, World);
 	output.Position = mul(mul(worldPosition, View), Projection);
-	output.Pos2DAsSeenByLight = mul(mul(
-		worldPosition, LightViewMatrix), LightProjectionMatrix);
-	output.Normal = normalize(mul(input.Normal,
-		WorldInverseTranspose));
+	output.Pos2DAsSeenByLight = mul(mul( worldPosition, LightViewMatrix), LightProjectionMatrix);
+	output.Normal = normalize(mul(input.Normal, WorldInverseTranspose));
 	output.WorldPosition = worldPosition.xyz;
 	output.TexCoords = input.TexCoords;
 	return output;
@@ -50,17 +48,20 @@ float4 ShadowedScenePixelShader(ShadowedSceneVertexShaderOutput input) : COLOR0
 	float4 diffuseLightingFactor = 0; //black
 	if (projTexCoord.x >= 0 && projTexCoord.x <= 1 && projTexCoord.y >= 0 && projTexCoord.y <= 1 &&
 		saturate(projTexCoord).x == projTexCoord.x && saturate(projTexCoord).y == projTexCoord.y)
-		{
+	{
 		float depthStoredInShadowMap = tex2D(ShadowMapSampler, projTexCoord.xy).r;
-		if (depthStoredInShadowMap +1.0f / 100.0f > realDistance ) // "1.0f/100.f" is bias
+		if (realDistance + 1.0f / 100.0f > depthStoredInShadowMap) // "1.0f/100.f" is bias
 		{
-			diffuseLightingFactor = max(0, dot(N,L)); //Gray
+			diffuseLightingFactor = max(0, dot(N, L)); //Gray
 		}
 		else
 		{
-			diffuseLightingFactor = float4(1, 0, 0, 1); //Red
+			// diffuseLightingFactor = max(0, dot(N, L)); //Gray
+
+			diffuseLightingFactor = float4(1, 0, 0, 1); //Red MESS WITH THIS FOR DIFFERENT COLOR?F
 		}
-		}
+	}
+		
 	return diffuseLightingFactor;
 }
 
