@@ -23,7 +23,6 @@ namespace Lab09
         MouseState preMouse;
         //Model model;
         Model[] models;
-        Texture2D texture;
 
         Matrix lightView = Matrix.CreateLookAt(new Vector3(0, 0, 10), Vector3.Zero, Vector3.UnitY);
         Matrix lightProjection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 100f);
@@ -37,6 +36,8 @@ namespace Lab09
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+            _graphics.GraphicsProfile = GraphicsProfile.HiDef;
+
         }
 
         protected override void Initialize()
@@ -48,15 +49,12 @@ namespace Lab09
 
         protected override void LoadContent()
         {
-            //spriteBatch = new SpriteBatch(GraphicsDevice);
-            font = Content.Load<SpriteFont>("font");
-            //model = Content.Load<Model>("Plane");
-            //effect = Content.Load<Effect>("ProjectiveTexture");
-            texture = Content.Load<Texture2D>("nvlobby_new_negz");
+            spriteBatch = new SpriteBatch(GraphicsDevice);
+            font = Content.Load<SpriteFont>("Font");
+            effect = Content.Load<Effect>("ShadowShader");
             models = new Model[2];
             models[0] = Content.Load<Model>("Plane");
             models[1] = Content.Load<Model>("torus");
-            //shadowMap = Content.Load<Texture2D>()
 
             // TODO: use this.Content to load your game content here
 
@@ -106,13 +104,26 @@ namespace Lab09
 
             // ********************************** //
 
+            // Update Light
+            lightPosition = Vector3.Transform(
+                new Vector3(0, 0, 10),
+                Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL));
+            lightView = Matrix.CreateLookAt(
+                lightPosition,
+                Vector3.Zero,
+                Vector3.Transform(
+                    Vector3.UnitY,
+                    Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL)));
+            lightProjection =
+                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 50f);
+
 
 
             base.Update(gameTime);
         }
 
-        private void DrawShadowMap()
-        {
+    private void DrawShadowMap() {
+            effect.CurrentTechnique = effect.Techniques[0];
             foreach (Model model in models)
             {
                 foreach (EffectPass pass in effect.CurrentTechnique.Passes)
@@ -142,7 +153,7 @@ namespace Lab09
 
         }
 
-        private void DrawShadowedScene()
+    private void DrawShadowedScene()
         {
             effect.CurrentTechnique = effect.Techniques["ShadowedScene"];
             foreach (Model model in models)
@@ -163,7 +174,7 @@ namespace Lab09
                             effect.Parameters["LightProjectionMatrix"].SetValue(lightProjection);
                             effect.Parameters["LightPosition"].SetValue(lightPosition);
                             effect.Parameters["CameraPosition"].SetValue(cameraPosition);
-                            effect.Parameters["ShadowMap"].SetValue(shadowMap);
+                            //effect.Parameters["ShadowMap"].SetValue(shadowMap);
                             
 
                             pass.Apply(); 
@@ -179,8 +190,6 @@ namespace Lab09
             }
         }
 
-    
-
     protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
@@ -190,29 +199,35 @@ namespace Lab09
             GraphicsDevice.BlendState = BlendState.Opaque;
             GraphicsDevice.DepthStencilState = new DepthStencilState();
 
-            // LAB 9: STEP 2
+            // *** Lab 9 : Step2, Set the render target
             GraphicsDevice.SetRenderTarget(renderTarget);
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
 
-            // STEP 3
+            // *** Lab 9 : Step3, Render a shadow map
             DrawShadowMap();
 
-            // STEP 4
+            // *** Lab 9 : Step4: Clear the render target
             GraphicsDevice.SetRenderTarget(null);
             shadowMap = (Texture2D)renderTarget;
 
             // *** Lab 9 : Step5: Clear the render target
-            GraphicsDevice.Clear(ClearOptions.Target |
-            ClearOptions.DepthBuffer, Color.DarkSlateBlue, 1.0f, 0);
+            GraphicsDevice.Clear(ClearOptions.Target |  ClearOptions.DepthBuffer, Color.DarkSlateBlue, 1.0f, 0);
+
+            // *** Lab 9 : Step6, Draw a scene
+            DrawShadowedScene();
 
             using (SpriteBatch sprite = new SpriteBatch(GraphicsDevice))
             {
                 sprite.Begin();
                 sprite.Draw(shadowMap, new Vector2(0, 0), null, Color.White, 0,
                 new Vector2(0, 0), 1f, SpriteEffects.None, 1);
+                sprite.DrawString(font, lightPosition.Y.ToString("0.00"), new Vector2(300, 300), Color.White);
                 sprite.End();
             }
                 effect.CurrentTechnique = effect.Techniques[0];
+
+            // Step 7 Clear the shadow map
+            shadowMap = null;
 
             
 

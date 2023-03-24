@@ -140,11 +140,13 @@ namespace Assignment03
             cameraPosition = Vector3.Transform(new Vector3(0, 0, distance),
                 Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle) * Matrix.CreateTranslation(cameraTarget)
                 );
-            view = Matrix.CreateLookAt(cameraPosition, cameraTarget, Vector3.Transform(Vector3.UnitY,
-                    Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle)));
+            view = Matrix.CreateLookAt(cameraPosition, 
+                cameraTarget, 
+                Vector3.Transform(Vector3.UnitY, Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle)));
 
             // Update Light
-            lightPosition = Vector3.Transform(new Vector3(0, 0, 10),
+            lightPosition = Vector3.Transform(
+                new Vector3(0, 0, 10),
                 Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL));
 
             base.Update(gameTime);

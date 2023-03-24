@@ -7,6 +7,12 @@ float4x4 LightProjectionMatrix;
 float3 CameraPosition;
 float3 LightPosition;
 
+sampler ShadowMapSampler = sampler_state
+{
+    texture = <ShadowMapSampler>;
+
+};
+
 struct ShadowedSceneVertexShaderInput
 {
 	float4 Position : POSITION0;
@@ -29,9 +35,10 @@ ShadowedSceneVertexShader(ShadowedSceneVertexShaderInput input)
 	ShadowedSceneVertexShaderOutput output;
 	float4 worldPosition = mul(input.Position, World);
 	output.Position = mul(mul(worldPosition, View), Projection);
-	output.Pos2DAsSeenByLight = mul(mul( worldPosition, LightViewMatrix), LightProjectionMatrix);
-	output.Normal = normalize(mul(input.Normal, WorldInverseTranspose));
-	output.WorldPosition = worldPosition.xyz;
+	output.Pos2DAsSeenByLight = mul(mul( 
+		worldPosition, LightViewMatrix), LightProjectionMatrix);
+	output.Normal = normalize( mul(input.Normal, WorldInverseTranspose).xyz);
+	output.WorldPosition = worldPosition;
 	output.TexCoords = input.TexCoords;
 	return output;
 }
@@ -50,18 +57,19 @@ float4 ShadowedScenePixelShader(ShadowedSceneVertexShaderOutput input) : COLOR0
 		saturate(projTexCoord).x == projTexCoord.x && saturate(projTexCoord).y == projTexCoord.y)
 	{
 		float depthStoredInShadowMap = tex2D(ShadowMapSampler, projTexCoord.xy).r;
+		
 		if (realDistance + 1.0f / 100.0f > depthStoredInShadowMap) // "1.0f/100.f" is bias
 		{
 			diffuseLightingFactor = max(0, dot(N, L)); //Gray
 		}
 		else
 		{
-			// diffuseLightingFactor = max(0, dot(N, L)); //Gray
+			 //diffuseLightingFactor = max(0, dot(N, L)); //Gray
 
 			diffuseLightingFactor = float4(1, 0, 0, 1); //Red MESS WITH THIS FOR DIFFERENT COLOR?F
 		}
 	}
-		
+    diffuseLightingFactor.a = 1;
 	return diffuseLightingFactor;
 }
 
@@ -88,7 +96,8 @@ struct VertexShaderOutput
 VertexShaderOutput ShadowMapVertexShader(VertexShaderInput input)
 {
 	VertexShaderOutput output;
-	output.Position = mul(mul(input.Position, LightViewMatrix), LightProjectionMatrix);
+	
+    output.Position = mul(mul(mul(input.Position, World), LightViewMatrix), LightProjectionMatrix);
 	output.Position2D = output.Position;
 	return output;
 }
@@ -103,6 +112,7 @@ float4 ShadowMapPixelShader(VertexShaderOutput input) : COLOR0
 
 	float depth = 1.0 - projTexCoord.z; // invert depth Z
 	float4 color = (depth > 0) ? depth : 0; // culling
+    color.a = 1;
 	return color;
 }
 
