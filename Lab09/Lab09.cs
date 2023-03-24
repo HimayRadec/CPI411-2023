@@ -108,6 +108,7 @@ namespace Lab09
             lightPosition = Vector3.Transform(
                 new Vector3(0, 0, 10),
                 Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL));
+
             lightView = Matrix.CreateLookAt(
                 lightPosition,
                 Vector3.Zero,
