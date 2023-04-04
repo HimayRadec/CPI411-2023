@@ -131,7 +131,7 @@ namespace Lab10
                 Vector3 offsetPosition = particlePosition - cameraDirection * offset;
 
                 Particle particle = particleManager.getNext();
-                particle.Position = offsetPosition;
+                particle.Position = particlePosition; // offsetPosition
                 particle.Velocity = new Vector3(
                     random.Next(-1, 1),
                     random.Next(-1, 1),
