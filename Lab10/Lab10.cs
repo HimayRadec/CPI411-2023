@@ -23,7 +23,7 @@ namespace Lab10
         float angle2 = 0;
         float angleL = 0;
         float angleL2 = 0;
-        float distance = 10;
+        float distance = 40;
         MouseState preMouse;
         Model model;
         Model[] models;
@@ -58,7 +58,7 @@ namespace Lab10
             // TODO: use this.Content to load your game content here
             effect = Content.Load<Effect>("ParticleShader");
             texture = Content.Load<Texture2D>("fire");
-            model = Content.Load<Model>("torus");
+            model = Content.Load<Model>("Torus");
 
 
             random = new System.Random();
@@ -71,7 +71,7 @@ namespace Lab10
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // TODO: Add your update logic here
+            #region - TEMPLATE -
             // ************ TEMPLATE ************ //
             if (Keyboard.GetState().IsKeyDown(Keys.Left)) angleL += 0.02f;
             if (Keyboard.GetState().IsKeyDown(Keys.Right)) angleL -= 0.02f;
@@ -120,24 +120,30 @@ namespace Lab10
             lightProjection =
                 Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 50f);
             // ********************************** //
+            #endregion
 
             // Lab 10 
             if (Keyboard.GetState().IsKeyDown(Keys.P))
             {
+                // Offset particle position in the direction of the camera
+                Vector3 cameraDirection = Vector3.Normalize(cameraPosition - cameraTarget);
+                float offset = 1.5f; // Adjust this value to control the distance from the torus
+                Vector3 offsetPosition = particlePosition - cameraDirection * offset;
+
                 Particle particle = particleManager.getNext();
-                particle.Position = particlePosition;
+                particle.Position = offsetPosition;
                 particle.Velocity = new Vector3(
-                    random.Next(-1,1),
-                    random.Next(-1,1),
-                    random.Next(-1,1)
+                    random.Next(-1, 1),
+                    random.Next(-1, 1),
+                    random.Next(-1, 1)
                     );
                 particle.Acceleration = new Vector3(
                     random.Next(-1, 1),
                     random.Next(-1, 1),
                     random.Next(-1, 1)
                     );
-                particle.MaxAge = random.Next(1,5);
-                particle.Init();
+                particle.MaxAge = random.Next(1, 5);
+                particle.Init(); ;
             }
 
             // Update Particles
@@ -149,10 +155,25 @@ namespace Lab10
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            GraphicsDevice.BlendState = BlendState.AlphaBlend; // ?
-            GraphicsDevice.DepthStencilState = new DepthStencilState(); // ?
+            // Draw the torus model
+            Matrix modelWorldMatrix = Matrix.Identity;
+            foreach (ModelMesh mesh in model.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.World = modelWorldMatrix;
+                    effect.View = view;
+                    effect.Projection = projection;
+                }
+                mesh.Draw();
+            }
 
-            GraphicsDevice.RasterizerState = RasterizerState.CullNone; // Both sides are rendered
+            // Set depth buffer to read-only before drawing particles
+            GraphicsDevice.DepthStencilState = new DepthStencilState { DepthBufferEnable = true, DepthBufferWriteEnable = false };
+
+            // Draw particles
+            GraphicsDevice.BlendState = BlendState.AlphaBlend;
+            GraphicsDevice.RasterizerState = RasterizerState.CullNone;
 
             effect.CurrentTechnique = effect.Techniques[0];
             effect.CurrentTechnique.Passes[0].Apply();
@@ -162,11 +183,15 @@ namespace Lab10
             effect.Parameters["Texture"].SetValue(texture);
             effect.Parameters["InverseCamera"].SetValue(
                 Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle)
-                );  
+                );
 
             particleManager.Draw(GraphicsDevice);
 
+            // Reset the depth buffer to its default state after drawing particles
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
             base.Draw(gameTime);
         }
+
     }
 }
