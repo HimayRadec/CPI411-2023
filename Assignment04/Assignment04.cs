@@ -26,6 +26,13 @@ namespace Assignment04
         Model[] models;
         Texture2D texture;
         // **** TEMPLATE ************//
+        VertexPositionTexture[] vertices =
+        {
+            new VertexPositionTexture(new Vector3(0, 0, -20), new Vector2(0,0)),
+            new VertexPositionTexture(new Vector3(0, 0, 20), new Vector2(1,0)),
+            new VertexPositionTexture(new Vector3(20, 0, 0), new Vector2(1,1)),
+            new VertexPositionTexture(new Vector3(-20, 0, 0), new Vector2(0,1))
+        };
 
         public Assignment04()
         {
@@ -48,6 +55,8 @@ namespace Assignment04
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
+            effect = Content.Load<Effect>("SimplestRotate");
+
         }
 
         protected override void Update(GameTime gameTime)
@@ -107,6 +116,10 @@ namespace Assignment04
             // ********************************** //
             #endregion
 
+            effect.Parameters["World"].SetValue(world);
+            effect.Parameters["View"].SetValue(view);
+            effect.Parameters["Projection"].SetValue(projection);
+
             base.Update(gameTime);
         }
 
@@ -114,8 +127,14 @@ namespace Assignment04
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
 
+            // TODO: Add your drawing code here
+            foreach (var pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                GraphicsDevice.DrawUserPrimitives<VertexPositionTexture>(
+                  PrimitiveType.TriangleList, vertices, 0, vertices.Length / 4);
+            }
             base.Draw(gameTime);
         }
     }

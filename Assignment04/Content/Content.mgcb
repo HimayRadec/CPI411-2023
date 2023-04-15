@@ -25,6 +25,12 @@
 /processorParam:TextureFormat=Color
 /build:fire.png
 
+#begin SimplestPhongLighting.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:SimplestPhongLighting.fx
+
 #begin smoke.png
 /importer:TextureImporter
 /processor:TextureProcessor
