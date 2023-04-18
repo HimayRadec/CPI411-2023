@@ -52,9 +52,9 @@ VertexShaderOutput MyVertexShader(in VertexShaderInput input)
 	
 	// DETAILED BENDING
     float fObjPhase = dot(worldPos.xyz, 1);
-    fBranchPhase += fObjPhase; // what is fBranchPhase (main vegetation)?
+    fBranchPhase += fObjPhase; 
 	//  x is used for edges; y is used for branches
-    float fVtxPhase = dot(vPos.xyz, fDetailPhase + fBranchPhase); // what is fDetailPhase
+    float fVtxPhase = dot(vPos.xyz, fDetailPhase + fBranchPhase); 
 	
     float2 vWavesIn = fTime + float2(fVtxPhase, fBranchPhase); // 1.975, 0.793, 0.375, 0.193 are good frequencies
     float4 vWaves = (frac(vWavesIn.xxyy * float4(1.975, 0.793, 0.375, 0.193)) * 2.0 - 1.0) * fSpeed * fDetailFreq;
@@ -74,6 +74,11 @@ VertexShaderOutput MyVertexShader(in VertexShaderInput input)
 	vPos.xyz = normalize(vNewPos.xyz)* fLength;
 	
 
+	
+	
+	
+	
+	
 	output.Position = mul(input.Position, WorldViewProjection);
 	output.Color = input.Color;
 
