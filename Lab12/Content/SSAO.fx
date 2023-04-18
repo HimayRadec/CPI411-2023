@@ -1,6 +1,6 @@
-﻿float4x4 View;
-float4x4 Projection;
-float4x4 WorldInverseTranspose;
+﻿// float4x4 View;
+// float4x4 Projection;
+// float4x4 WorldInverseTranspose;
 float offset;
 float rad = 0.01f;
 texture RandomNormalTexture;

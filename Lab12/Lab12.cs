@@ -20,7 +20,7 @@ namespace Lab12
         float angle2 = 0;
         float angleL = 0;
         float angleL2 = 0;
-        float distance = 40;
+        float distance = 10;
         MouseState preMouse;
         Model model;
         Model[] models;
@@ -30,7 +30,7 @@ namespace Lab12
         RenderTarget2D renderTarget;
         Texture2D randomNormalMap, depthAndNormalMap;
         float offset = 800f / 256f;
-        float SSAORad = 0.01f;
+        float SSAORad = 0.0005f;
 
         VertexPositionTexture[] vertices =
         {
@@ -78,6 +78,9 @@ namespace Lab12
                 Exit();
 
             // TODO: Add your update logic here
+
+            if (Keyboard.GetState().IsKeyDown(Keys.R)) SSAORad += 0.0001f;
+            if (Keyboard.GetState().IsKeyDown(Keys.T)) SSAORad -= 0.0001f;
 
             #region - TEMPLATE -
             // ************ TEMPLATE ************ //
@@ -149,17 +152,20 @@ namespace Lab12
             GraphicsDevice.Clear(ClearOptions.Target |
              ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
             DrawDepthAndNormalMap();
+
             GraphicsDevice.SetRenderTarget(null);
             depthAndNormalMap = (Texture2D)renderTarget;
+
             // This block will be used later for Deferred Shading (SSAO)
             GraphicsDevice.Clear(ClearOptions.Target |
-             ClearOptions.DepthBuffer, Color.DarkSlateBlue, 1.0f, 0);
+            ClearOptions.DepthBuffer, Color.DarkSlateBlue, 1.0f, 0);
             DrawSSAO(); 
+
             using (SpriteBatch sprite = new SpriteBatch(GraphicsDevice))
             {
                 sprite.Begin();
                 sprite.Draw(depthAndNormalMap, new Vector2(0, 0), null,
-                 Color.White, 0, new Vector2(0, 0), 1f, SpriteEffects.None, 0);
+                 Color.White, 0, new Vector2(0, 0), 0.2f, SpriteEffects.None, 0);
                 sprite.End();
             }
 
