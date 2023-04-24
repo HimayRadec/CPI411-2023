@@ -28,6 +28,14 @@ namespace FinalProject
         Texture2D texture;
         // **** TEMPLATE ************//
 
+        KeyboardState previousKeyboardState;
+        KeyboardState currentKeyboardState;
+
+        private bool IsKeyPressed(Keys key)
+        {
+            return !previousKeyboardState.IsKeyDown(key) && currentKeyboardState.IsKeyDown(key);
+        }
+
         public FinalProject()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -107,6 +115,8 @@ namespace FinalProject
                 Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 50f);
             // ********************************** //
 
+            ControlParameters();
+
             base.Update(gameTime);
         }
 
@@ -117,6 +127,55 @@ namespace FinalProject
             // TODO: Add your drawing code here
 
             base.Draw(gameTime);
+        }
+
+        private float detailBranchAmplitude = 0.05f;
+        private float detailSideToSideAmplitude = 0.05f;
+        private float mainBendScale = 0.01f;
+        private bool detailBranchOn = true;
+        private bool detailSideToSideOn = true;
+        private bool mainBendOn = true;
+
+        private void ControlParameters()
+        {
+            if (currentKeyboardState.IsKeyDown(Keys.Q))
+            {
+                mainBendOn = !mainBendOn;
+            }
+            if (currentKeyboardState.IsKeyDown(Keys.W))
+            {
+                mainBendScale *= 0.99f;
+            }
+            if (currentKeyboardState.IsKeyDown(Keys.E))
+            {
+                mainBendScale *= 1.01f;
+            }
+
+            if (IsKeyPressed(Keys.A))
+            {
+                detailBranchOn = !detailBranchOn;
+            }
+            if (currentKeyboardState.IsKeyDown(Keys.S))
+            {
+                detailBranchAmplitude *= 0.99f;
+            }
+            if (currentKeyboardState.IsKeyDown(Keys.D))
+            {
+                detailBranchAmplitude *= 1.01f;
+            }
+
+            if (IsKeyPressed(Keys.Z))
+            {
+                detailSideToSideOn = !detailSideToSideOn;
+            }
+            if (currentKeyboardState.IsKeyDown(Keys.X))
+            {
+                detailSideToSideAmplitude *= 0.99f;
+            }
+            if (currentKeyboardState.IsKeyDown(Keys.C))
+            {
+                detailSideToSideAmplitude *= 1.01f;
+            }
         }
     }
 }
