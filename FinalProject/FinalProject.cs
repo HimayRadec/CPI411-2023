@@ -25,7 +25,7 @@ namespace FinalProject
         float angle2 = 0;
         float angleL = 0;
         float angleL2 = 0;
-        float distance = 60;
+        float distance = 90;
         MouseState preMouse;
         Model model;
         Model[] models;
@@ -59,8 +59,8 @@ namespace FinalProject
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            model = Content.Load<Model>("VegetationPlant");
-            effect = Content.Load<Effect>("SimplestPhongLighting");
+            model = Content.Load<Model>("Torus");
+            effect = Content.Load<Effect>("Wind");
             // TODO: use this.Content to load your game content here
         }
 
@@ -76,7 +76,7 @@ namespace FinalProject
             if (Keyboard.GetState().IsKeyDown(Keys.Right)) angleL -= 0.02f;
             if (Keyboard.GetState().IsKeyDown(Keys.Up)) angleL2 += 0.02f;
             if (Keyboard.GetState().IsKeyDown(Keys.Down)) angleL2 -= 0.02f;
-            if (Keyboard.GetState().IsKeyDown(Keys.S)) { angle = angle2 = angleL = angleL2 = 0; distance = 30; cameraTarget = Vector3.Zero; }
+            if (Keyboard.GetState().IsKeyDown(Keys.S)) { angle = angle2 = angleL = angleL2 = 0; distance = 90; cameraTarget = Vector3.Zero; }
             if (Mouse.GetState().LeftButton == ButtonState.Pressed)
             {
                 angle -= (Mouse.GetState().X - preMouse.X) / 100f;
@@ -130,7 +130,7 @@ namespace FinalProject
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
-            effect.CurrentTechnique = effect.Techniques[1];
+            effect.CurrentTechnique = effect.Techniques[0];
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 foreach (ModelMesh mesh in model.Meshes)
@@ -141,20 +141,20 @@ namespace FinalProject
                         effect.Parameters["World"].SetValue(mesh.ParentBone.Transform);
                         effect.Parameters["View"].SetValue(view);
                         effect.Parameters["Projection"].SetValue(projection);
-                        effect.Parameters["AmbientColor"].SetValue(ambient);
-                        effect.Parameters["AmbientIntensity"].SetValue(ambientIntensity);
-                        effect.Parameters["DiffuseColor"].SetValue(diffuseColor);
-                        effect.Parameters["DiffuseIntensity"].SetValue(1f);
+                        //effect.Parameters["AmbientColor"].SetValue(ambient);
+                        //effect.Parameters["AmbientIntensity"].SetValue(ambientIntensity);
+                        //effect.Parameters["DiffuseColor"].SetValue(diffuseColor);
+                        //effect.Parameters["DiffuseIntensity"].SetValue(1f);
 
                         Matrix worldInverseTranspose = Matrix.Transpose(Matrix.Invert(mesh.ParentBone.Transform));
-                        effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTranspose);
+                        //effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTranspose);
 
                         // Lab04
-                        effect.Parameters["SpecularColor"].SetValue(specularColor);
+                        //effect.Parameters["SpecularColor"].SetValue(specularColor);
                         // effect.Parameters["SpecularIntensity"].SetValue(1);
-                        effect.Parameters["Shininess"].SetValue(20f);
-                        effect.Parameters["LightPosition"].SetValue(lightPosition);
-                        effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+                        //effect.Parameters["Shininess"].SetValue(20f);
+                        //effect.Parameters["LightPosition"].SetValue(lightPosition);
+                        //effect.Parameters["CameraPosition"].SetValue(cameraPosition);
 
                         pass.Apply();
                         // ?? What is VertexBuffer, IndexBuffer ??
