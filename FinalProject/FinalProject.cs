@@ -17,11 +17,15 @@ namespace FinalProject
         Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 600f, 0.1f, 100f);
         Vector3 cameraPosition, cameraTarget, lightPosition;
         Matrix lightView, lightProjection;
+        Vector4 ambient = new Vector4(0, 0, 0, 0);
+        Vector4 specularColor = new Vector4(1, 1, 1, 1);
+        float ambientIntensity = 0;
+        Vector4 diffuseColor = new Vector4(1, 1, 1, 1);
         float angle = 0;
         float angle2 = 0;
         float angleL = 0;
         float angleL2 = 0;
-        float distance = 10;
+        float distance = 60;
         MouseState preMouse;
         Model model;
         Model[] models;
@@ -55,7 +59,8 @@ namespace FinalProject
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-
+            model = Content.Load<Model>("VegetationPlant");
+            effect = Content.Load<Effect>("SimplestPhongLighting");
             // TODO: use this.Content to load your game content here
         }
 
@@ -125,6 +130,47 @@ namespace FinalProject
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
+            effect.CurrentTechnique = effect.Techniques[1];
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            {
+                foreach (ModelMesh mesh in model.Meshes)
+                {
+                    foreach (ModelMeshPart part in mesh.MeshParts)
+                    {
+                        // ?? Where is this data going ??
+                        effect.Parameters["World"].SetValue(mesh.ParentBone.Transform);
+                        effect.Parameters["View"].SetValue(view);
+                        effect.Parameters["Projection"].SetValue(projection);
+                        effect.Parameters["AmbientColor"].SetValue(ambient);
+                        effect.Parameters["AmbientIntensity"].SetValue(ambientIntensity);
+                        effect.Parameters["DiffuseColor"].SetValue(diffuseColor);
+                        effect.Parameters["DiffuseIntensity"].SetValue(1f);
+
+                        Matrix worldInverseTranspose = Matrix.Transpose(Matrix.Invert(mesh.ParentBone.Transform));
+                        effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTranspose);
+
+                        // Lab04
+                        effect.Parameters["SpecularColor"].SetValue(specularColor);
+                        // effect.Parameters["SpecularIntensity"].SetValue(1);
+                        effect.Parameters["Shininess"].SetValue(20f);
+                        effect.Parameters["LightPosition"].SetValue(lightPosition);
+                        effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+
+                        pass.Apply();
+                        // ?? What is VertexBuffer, IndexBuffer ??
+                        GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
+                        GraphicsDevice.Indices = part.IndexBuffer;
+
+                        GraphicsDevice.DrawIndexedPrimitives(
+                            PrimitiveType.TriangleList,
+                            part.VertexOffset,
+                            part.StartIndex,
+                            part.PrimitiveCount
+                            );
+                    }
+                }
+            }
+
 
             base.Draw(gameTime);
         }

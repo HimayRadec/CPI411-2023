@@ -26,6 +26,15 @@ bool InvertNormal = false;
 #define UP_AND_DOWN_FREQ1 0.375
 #define UP_AND_DOWN_FREQ2 0.193
 
+#define FAKE_LIGHT float3(0.5744, 0.5744, 0.5744)
+
+
+texture Texture : register(t0);
+sampler TheSampler : register(s0) = sampler_state
+{
+    Texture = <Texture>;
+};
+
 
 
 struct VertexShaderInput
@@ -173,7 +182,15 @@ VertexShaderOutput MyVertexShader(VertexShaderInput input)
 
 float4 MyPixelShader(VertexShaderOutput input) : COLOR
 {
-	return input.Color;
+    float4 value = tex2D(TheSampler, input.TexCoord);
+
+	// Just some quick and dirty lighting.
+    float brightNess = dot(input.Normal, FAKE_LIGHT); // Directional
+    brightNess = brightNess * 0.4 + 0.6; // Add in ambient (60%)
+    value.rgb *= brightNess;
+
+    clip(value.a - 0.5); // Alpha test for leaf outlines.
+    return value;
 }
 
 technique BasicColorDrawing
