@@ -68,3 +68,38 @@ void frag_custom_end(inout fragPass pPass, inout half3 cFinal)
         cFinal.xyz += pPass.cSpecularAcc.xyz * pPass.cGlossMap.xyz * MatSpecColor.xyz; // Apply prebaked ambient occlusion term. 
         cFinal.xyz *= pPass.pCustom.fAmbientOcclusion; 
     } 
+
+struct VertexShaderInput
+{
+    float4 Position : POSITION0;
+    float2 TexCoord : TEXCOORD0;
+    float3 Normal : NORMAL0;
+    float4 Color : COLOR0;
+};
+
+struct VertexShaderOutput
+{
+    float4 Position : POSITION0;
+    float2 TexCoord : TEXCOORD0;
+    float4 Color : COLOR0;
+    float3 Normal : TEXCOORD1;
+};
+
+VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
+{
+    
+}
+
+float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
+{
+    
+}
+
+technique Technique1
+{
+    pass Pass1
+    {
+        VertexShader = compile vs_4_0 VertexShaderFunction();
+        PixelShader = compile ps_4_0 PixelShaderFunction();
+    };
+}
