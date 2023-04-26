@@ -35,40 +35,7 @@ struct VertexShaderOutput
 	float4 Normal : TEXCOORD0;
 	float4 WorldPosition: TEXCOORD1;
 
-};
-
-
-// GOURAND VERTEX SHADER
-VertexShaderOutput GourandVertexShaderFunction(VertexInput input)
-{
-	VertexShaderOutput output;
-	float4 worldPosition = mul(input.Position, World);
-	float4 viewPosition = mul(worldPosition, View);
-	output.Position = mul(viewPosition, Projection);
-	output.WorldPosition = 0;
-	output.Normal = 0;
-	float3 N = normalize((mul(input.Normal, WorldInverseTranspose)).xyz);
-	float3 V = normalize(CameraPosition - worldPosition.xyz);
-	float3 L = normalize(LightPosition);
-	float3 R = reflect(-L, N);
-	float4 ambient = AmbientColor * AmbientIntensity;
-	float4 diffuse = DiffuseIntensity * DiffuseColor * max(0, dot(N, L));
-	float4 specular = pow(max(0, dot(V, R)), Shininess) * SpecularColor * SpecularIntensity;
-	output.Color = saturate(ambient + diffuse + specular);
-	return output;
-}
-float4 GourandPixelShaderFunction(VertexShaderOutput input) : COLOR
-{
-	return input.Color;
-}
-technique MyTechnique
-{
-	pass pass1
-	{
-		VertexShader = compile vs_4_0 GourandVertexShaderFunction();
-		PixelShader = compile ps_4_0 GourandPixelShaderFunction();
-	}
-};
+}; 
 
 // PHONG PIXEL SHADER
 VertexShaderOutput PhongVertexShaderFunction(VertexInput input)
@@ -107,51 +74,98 @@ technique Phong
 		VertexShader = compile vs_4_0 PhongVertexShaderFunction();
 		PixelShader = compile ps_4_0 PhongPixelShaderFunction();
 	}
+}; 
+
+// RED
+struct RVS_INPUT
+{
+    float4 position : POSITION;
+    float4 color : COLOR;
 };
 
-// TOON PIXEL SHADER
-VertexShaderOutput ToonVertexShaderFunction(VertexInput input)
+struct RVS_OUTPUT
 {
-	VertexShaderOutput output;
-	float4 worldPosition = mul(input.Position, World);
-	float4 viewPosition = mul(worldPosition, View);
-	output.Position = mul(viewPosition, Projection);
-	output.WorldPosition = worldPosition;
-	output.Normal = mul(input.Normal, WorldInverseTranspose);
-	output.Color = 0;
-
-	return output;
-}
-float4 ToonPixelShaderFunction(VertexShaderOutput input) : COLOR0
-{
-
-	float3 N = normalize(input.Normal.xyz);
-	float3 V = normalize(CameraPosition - input.WorldPosition.xyz);
-	float3 L = normalize(LightPosition);
-	float3 R = reflect(-L, N);
-	float D = dot(V, R);
-	if (D < -0.7)
-	{
-		return float4(0, 0, 0, 1);
-	}
-	else if (D < 0.2)
-	{
-		return float4(0.25, 0.25, 0.25, 1);
-	}
-	else if (D < 0.97)
-	{
-		return float4(0.5, 0.5, 0.5, 1);
-	}
-	else
-	{
-		return float4(1, 1, 1, 1);
-	}
-}
-technique Toon
-{
-	pass pass1
-	{
-		VertexShader = compile vs_4_0 ToonVertexShaderFunction();
-		PixelShader = compile ps_4_0 ToonPixelShaderFunction();
-	}
+    float4 pos : SV_POSITION;
+    float4 color : COLOR0;
 };
+
+RVS_OUTPUT RVSMain(RVS_INPUT input)
+{
+    RVS_OUTPUT output;
+    output.pos = input.position;
+    output.color = input.color;
+    return output;
+}
+
+float4 RPSMain(RVS_OUTPUT input) : SV_Target
+{
+    return float4(input.color.r, 0, 0, 1); // output only the red component of the color
+}
+
+technique RValue
+{
+    pass pass1
+    {
+        VertexShader = compile vs_4_0 RVSMain();
+        PixelShader = compile ps_4_0 RPSMain();
+    }
+}
+
+// GREEN
+struct GVS_INPUT
+{
+    float4 position : POSITION;
+    float4 color : COLOR;
+};
+
+struct GVS_OUTPUT
+{
+    float4 pos : SV_POSITION;
+    float4 color : COLOR0;
+};
+
+GVS_OUTPUT GVSMain(GVS_INPUT input)
+{
+    GVS_OUTPUT output;
+    output.pos = input.position;
+    output.color = input.color;
+    return output;
+}
+
+float4 GPSMain(GVS_OUTPUT input) : SV_Target
+{
+    return float4(0, input.color.g, 0, 1); // output only the red component of the color
+}
+
+technique GValue
+{
+    pass pass1
+    {
+        VertexShader = compile vs_4_0 GVSMain();
+        PixelShader = compile ps_4_0 GPSMain();
+    }
+}
+
+// BLUE 
+
+RVS_OUTPUT BVSMain(RVS_INPUT input)
+{
+    RVS_OUTPUT output;
+    output.pos = input.position;
+    output.color = input.color;
+    return output;
+}
+
+float4 BPSMain(RVS_OUTPUT input) : SV_Target
+{
+    return float4(0, 0, input.color.b, 1); // output only the red component of the color
+}
+
+technique RValue
+{
+    pass pass1
+    {
+        VertexShader = compile vs_4_0 BVSMain();
+        PixelShader = compile ps_4_0 BPSMain();
+    }
+}
