@@ -63,9 +63,3 @@
 /processorParam:TextureFormat=Compressed
 /build:Torus.FBX
 
-#begin Wind.fx
-/importer:EffectImporter
-/processor:EffectProcessor
-/processorParam:DebugMode=Auto
-/build:Wind.fx
-

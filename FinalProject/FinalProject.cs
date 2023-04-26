@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 namespace FinalProject
 {
@@ -35,10 +36,23 @@ namespace FinalProject
         KeyboardState previousKeyboardState;
         KeyboardState currentKeyboardState;
 
-        private bool IsKeyPressed(Keys key)
-        {
-            return !previousKeyboardState.IsKeyDown(key) && currentKeyboardState.IsKeyDown(key);
-        }
+        int currentTechnique = 0;
+
+        Vector2 lastWindSpeed;
+        Random random = new Random();
+        Vector2 newWindSpeed;
+        Vector2 currentWindSpeed;
+        float timeSinceLastThing;
+        float totalTime;
+
+        private float detailBranchAmplitude = 0.05f;
+        private float detailSideToSideAmplitude = 0.05f;
+        private float mainBendScale = 0.01f;
+        private bool detailBranchOn = true;
+        private bool detailSideToSideOn = true;
+        private bool mainBendOn = true;
+
+
 
         public FinalProject()
         {
@@ -59,8 +73,9 @@ namespace FinalProject
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            model = Content.Load<Model>("Torus");
-            effect = Content.Load<Effect>("Wind");
+            model = Content.Load<Model>("SimplePlant");
+            effect = Content.Load<Effect>("SimplestPhongLighting");
+
             // TODO: use this.Content to load your game content here
         }
 
@@ -69,92 +84,66 @@ namespace FinalProject
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // TODO: Add your update logic here
-
-            // ************ TEMPLATE ************ //
-            if (Keyboard.GetState().IsKeyDown(Keys.Left)) angleL += 0.02f;
-            if (Keyboard.GetState().IsKeyDown(Keys.Right)) angleL -= 0.02f;
-            if (Keyboard.GetState().IsKeyDown(Keys.Up)) angleL2 += 0.02f;
-            if (Keyboard.GetState().IsKeyDown(Keys.Down)) angleL2 -= 0.02f;
-            if (Keyboard.GetState().IsKeyDown(Keys.S)) { angle = angle2 = angleL = angleL2 = 0; distance = 90; cameraTarget = Vector3.Zero; }
-            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
-            {
-                angle -= (Mouse.GetState().X - preMouse.X) / 100f;
-                angle2 += (Mouse.GetState().Y - preMouse.Y) / 100f;
-            }
-            if (Mouse.GetState().RightButton == ButtonState.Pressed)
-            {
-                distance += (Mouse.GetState().X - preMouse.X) / 100f;
-            }
-
-            if (Mouse.GetState().MiddleButton == ButtonState.Pressed)
-            {
-                Vector3 ViewRight = Vector3.Transform(Vector3.UnitX,
-                    Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle));
-                Vector3 ViewUp = Vector3.Transform(Vector3.UnitY,
-                    Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle));
-                cameraTarget -= ViewRight * (Mouse.GetState().X - preMouse.X) / 10f;
-                cameraTarget += ViewUp * (Mouse.GetState().Y - preMouse.Y) / 10f;
-            }
-            preMouse = Mouse.GetState();
-            // Update Camera
-            cameraPosition = Vector3.Transform(new Vector3(0, 0, distance),
-                Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle) * Matrix.CreateTranslation(cameraTarget));
-            view = Matrix.CreateLookAt(
-                cameraPosition,
-                cameraTarget,
-                Vector3.Transform(Vector3.UnitY, Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle)));
-
-            // Update Light
-            lightPosition = Vector3.Transform(
-                new Vector3(0, 0, 10),
-                Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL));
-
-            lightView = Matrix.CreateLookAt(
-                lightPosition,
-                Vector3.Zero,
-                Vector3.Transform(
-                    Vector3.UnitY,
-                    Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL)));
-            lightProjection =
-                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 50f);
-            // ********************************** //
-
+            CameraControls();
+            LightControls();
             ControlParameters();
+            SwapTechnique();
+
+            //float time = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+
+            // Change wind every second, and smoothly interpolate to the new strength/direction.
+            float timeEllapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            totalTime += timeEllapsed;
+            timeSinceLastThing -= timeEllapsed;
+            if (timeSinceLastThing < 0f)
+            {
+                lastWindSpeed = newWindSpeed;
+                float x = (float)random.NextDouble();
+                x = (float)Math.Pow(x, 3);
+                float y = (float)random.NextDouble();
+                y = (float)Math.Pow(y, 3);
+                newWindSpeed = new Vector2(x * 2f - 1f,
+                    y * 2f - 1f);
+                newWindSpeed *= 10f;
+                timeSinceLastThing += 1f;
+            }
+            currentWindSpeed = Vector2.SmoothStep(newWindSpeed, lastWindSpeed, timeSinceLastThing);
 
             base.Update(gameTime);
         }
 
+
+       
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
-            effect.CurrentTechnique = effect.Techniques[0];
+            effect.CurrentTechnique = effect.Techniques[currentTechnique];
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 foreach (ModelMesh mesh in model.Meshes)
                 {
                     foreach (ModelMeshPart part in mesh.MeshParts)
                     {
-                        // ?? Where is this data going ??
                         effect.Parameters["World"].SetValue(mesh.ParentBone.Transform);
                         effect.Parameters["View"].SetValue(view);
                         effect.Parameters["Projection"].SetValue(projection);
-                        //effect.Parameters["AmbientColor"].SetValue(ambient);
-                        //effect.Parameters["AmbientIntensity"].SetValue(ambientIntensity);
-                        //effect.Parameters["DiffuseColor"].SetValue(diffuseColor);
-                        //effect.Parameters["DiffuseIntensity"].SetValue(1f);
-
                         Matrix worldInverseTranspose = Matrix.Transpose(Matrix.Invert(mesh.ParentBone.Transform));
-                        //effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTranspose);
+                        effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTranspose);
 
-                        // Lab04
-                        //effect.Parameters["SpecularColor"].SetValue(specularColor);
-                        // effect.Parameters["SpecularIntensity"].SetValue(1);
-                        //effect.Parameters["Shininess"].SetValue(20f);
-                        //effect.Parameters["LightPosition"].SetValue(lightPosition);
-                        //effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+                        effect.Parameters["AmbientColor"].SetValue(ambient);
+                        effect.Parameters["AmbientIntensity"].SetValue(ambientIntensity);
+
+                        effect.Parameters["DiffuseColor"].SetValue(diffuseColor);
+                        effect.Parameters["DiffuseIntensity"].SetValue(1f);
+
+                        effect.Parameters["Shininess"].SetValue(20f);
+                        effect.Parameters["SpecularColor"].SetValue(specularColor);
+                        effect.Parameters["SpecularIntensity"].SetValue(1);
+
+                        effect.Parameters["LightPosition"].SetValue(lightPosition);
+                        effect.Parameters["CameraPosition"].SetValue(cameraPosition);
 
                         pass.Apply();
                         // ?? What is VertexBuffer, IndexBuffer ??
@@ -175,13 +164,10 @@ namespace FinalProject
             base.Draw(gameTime);
         }
 
-        private float detailBranchAmplitude = 0.05f;
-        private float detailSideToSideAmplitude = 0.05f;
-        private float mainBendScale = 0.01f;
-        private bool detailBranchOn = true;
-        private bool detailSideToSideOn = true;
-        private bool mainBendOn = true;
-
+        private bool IsKeyPressed(Keys key)
+        {
+            return !previousKeyboardState.IsKeyDown(key) && currentKeyboardState.IsKeyDown(key);
+        }
         private void ControlParameters()
         {
             if (currentKeyboardState.IsKeyDown(Keys.Q))
@@ -222,6 +208,64 @@ namespace FinalProject
             {
                 detailSideToSideAmplitude *= 1.01f;
             }
+        }   
+        private void CameraControls()
+        {
+            if (Keyboard.GetState().IsKeyDown(Keys.Left)) angleL += 0.02f;
+            if (Keyboard.GetState().IsKeyDown(Keys.Right)) angleL -= 0.02f;
+            if (Keyboard.GetState().IsKeyDown(Keys.Up)) angleL2 += 0.02f;
+            if (Keyboard.GetState().IsKeyDown(Keys.Down)) angleL2 -= 0.02f;
+            if (Keyboard.GetState().IsKeyDown(Keys.S)) { angle = angle2 = angleL = angleL2 = 0; distance = 90; cameraTarget = Vector3.Zero; }
+            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+            {
+                angle -= (Mouse.GetState().X - preMouse.X) / 100f;
+                angle2 += (Mouse.GetState().Y - preMouse.Y) / 100f;
+            }
+            if (Mouse.GetState().RightButton == ButtonState.Pressed)
+            {
+                distance += (Mouse.GetState().X - preMouse.X) / 100f;
+            }
+
+            if (Mouse.GetState().MiddleButton == ButtonState.Pressed)
+            {
+                Vector3 ViewRight = Vector3.Transform(Vector3.UnitX,
+                    Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle));
+                Vector3 ViewUp = Vector3.Transform(Vector3.UnitY,
+                    Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle));
+                cameraTarget -= ViewRight * (Mouse.GetState().X - preMouse.X) / 10f;
+                cameraTarget += ViewUp * (Mouse.GetState().Y - preMouse.Y) / 10f;
+            }
+            preMouse = Mouse.GetState();
+            // Update Camera
+            cameraPosition = Vector3.Transform(new Vector3(0, 0, distance),
+                Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle) * Matrix.CreateTranslation(cameraTarget));
+            view = Matrix.CreateLookAt(
+                cameraPosition,
+                cameraTarget,
+                Vector3.Transform(Vector3.UnitY, Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle)));
+        }
+        private void LightControls()
+        {
+            // Update Light
+            lightPosition = Vector3.Transform(
+                new Vector3(0, 0, 10),
+                Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL));
+
+            lightView = Matrix.CreateLookAt(
+                lightPosition,
+                Vector3.Zero,
+                Vector3.Transform(
+                    Vector3.UnitY,
+                    Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL)));
+            lightProjection =
+                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 50f);
+        }
+        private void SwapTechnique()
+        {
+            if (Keyboard.GetState().IsKeyDown(Keys.D0)) {  currentTechnique = 0; }
+            if (Keyboard.GetState().IsKeyDown(Keys.D1)) {  currentTechnique = 1; }
+            if (Keyboard.GetState().IsKeyDown(Keys.D2)) {  currentTechnique = 2; }
+            if (Keyboard.GetState().IsKeyDown(Keys.D3)) { currentTechnique = 3; }
         }
     }
 }
