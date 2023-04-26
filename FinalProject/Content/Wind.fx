@@ -2,6 +2,37 @@ float4x4 World;
 float4x4 View;
 float4x4 Projection;
 
+// This is the wind direction and magnitude on the horizontal plane.
+float2 WindSpeed;
+
+// This needs to keep increasing. The functions we use to simulate sine/cos
+// waves don't have a distinct period, so we can't loop time back to a certain
+// point to avoid floating point precision issues at large values. One could take
+// advantage of lulls in the wind to flip this back to zero, if desired.
+float Time;
+
+// This describes how much the overall plant bends due to the wind.
+float BendScale = 0.01;
+
+// This describes how much the overall leaf/branch oscillates in the up-and-down direction.
+float BranchAmplitude = 0.05;
+
+// This describes how much the overall leaf/branch oscillates side-to-side.
+float DetailAmplitude = 0.05;
+
+bool InvertNormal = false;
+
+// The suggested frequencies from the Crytek paper
+// The side-to-side motion has a much higher frequency than the up-and-down.
+#define SIDE_TO_SIDE_FREQ1 1.975
+#define SIDE_TO_SIDE_FREQ2 0.793
+#define UP_AND_DOWN_FREQ1 0.375
+#define UP_AND_DOWN_FREQ2 0.193
+
+#define FAKE_LIGHT float3(0.5744, 0.5744, 0.5744)
+
+
+
 texture Texture : register(t0);
 sampler TheSampler : register(s0) = sampler_state
 {
@@ -36,12 +67,7 @@ float4 SmoothTriangleWave( float4 x ) {
   return SmoothCurve( TriangleWave( x ) );  
 }  
 
-// The suggested frequencies from the Crytek paper
-// The side-to-side motion has a much higher frequency than the up-and-down.
-#define SIDE_TO_SIDE_FREQ1 1.975
-#define SIDE_TO_SIDE_FREQ2 0.793
-#define UP_AND_DOWN_FREQ1 0.375
-#define UP_AND_DOWN_FREQ2 0.193
+
 
 // This provides "chaotic" motion for leaves and branches (the entire plant, really)
 void ApplyDetailBending(
@@ -115,25 +141,7 @@ void ApplyMainBending(inout float3 vPos, float2 vWind, float fBendScale)
 	vPos.xyz = normalize(vNewPos.xyz)* fLength;  
 }
 
-// This is the wind direction and magnitude on the horizontal plane.
-float2 WindSpeed;
 
-// This needs to keep increasing. The functions we use to simulate sine/cos
-// waves don't have a distinct period, so we can't loop time back to a certain
-// point to avoid floating point precision issues at large values. One could take
-// advantage of lulls in the wind to flip this back to zero, if desired.
-float Time;
-
-// This describes how much the overall plant bends due to the wind.
-float BendScale = 0.01;
-
-// This describes how much the overall leaf/branch oscillates in the up-and-down direction.
-float BranchAmplitude = 0.05;
-
-// This describes how much the overall leaf/branch oscillates side-to-side.
-float DetailAmplitude = 0.05;
-
-bool InvertNormal = false;
 
 VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 {
@@ -182,7 +190,6 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 	return output;
 }
 
-#define FAKE_LIGHT float3(0.5744, 0.5744, 0.5744)
 
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
