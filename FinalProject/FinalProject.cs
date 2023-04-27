@@ -15,7 +15,11 @@ namespace FinalProject
         Effect effect;
         Matrix world = Matrix.Identity;
         Matrix view = Matrix.CreateLookAt(new Vector3(20, 0, 0), new Vector3(0, 0, 0), Vector3.UnitY);
-        Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45), 800f / 600f, 0.1f, 100f);
+        Matrix projection = Matrix.CreatePerspectiveFieldOfView(
+            MathHelper.ToRadians(45), 
+            800f / 600f, 
+            0.01f, 
+            1000f);
         Vector3 cameraPosition, cameraTarget, lightPosition;
         Matrix lightView, lightProjection;
         Vector4 ambient = new Vector4(0, 0, 0, 0);
@@ -26,7 +30,7 @@ namespace FinalProject
         float angle2 = 0;
         float angleL = 0;
         float angleL2 = 0;
-        float distance = 90;
+        float distance = 150;
         MouseState preMouse;
         Model model;
         Model[] models;
@@ -36,7 +40,7 @@ namespace FinalProject
         KeyboardState previousKeyboardState;
         KeyboardState currentKeyboardState;
 
-        int currentTechnique = 0;
+        int currentTechnique = 5;
 
         Vector2 lastWindSpeed;
         Random random = new Random();
@@ -44,6 +48,7 @@ namespace FinalProject
         Vector2 currentWindSpeed;
         float timeSinceLastThing;
         float totalTime;
+        float time;
 
         private float detailBranchAmplitude = 0.05f;
         private float detailSideToSideAmplitude = 0.05f;
@@ -52,11 +57,18 @@ namespace FinalProject
         private bool detailSideToSideOn = true;
         private bool mainBendOn = true;
 
+        Texture2D plantTexture;
+
+
+
 
 
         public FinalProject()
         {
             _graphics = new GraphicsDeviceManager(this);
+            _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width; // Set the width of the window to the user's screen width
+            _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height; // Set the height of the window to the user's screen height
+
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
@@ -75,6 +87,9 @@ namespace FinalProject
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             model = Content.Load<Model>("SimplePlant");
             effect = Content.Load<Effect>("SimplestPhongLighting");
+            plantTexture = Content.Load<Texture2D>("logo_mg");
+
+            
 
             // TODO: use this.Content to load your game content here
         }
@@ -84,6 +99,15 @@ namespace FinalProject
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            // Update the time value based on the elapsed game time
+            time += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            effect.Parameters["Time"].SetValue(time); // update the time value in the constant buffer
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Escape) ||
+                GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+            {
+                Exit();
+            }
             CameraControls();
             LightControls();
             ControlParameters();
@@ -145,6 +169,19 @@ namespace FinalProject
                         effect.Parameters["LightPosition"].SetValue(lightPosition);
                         effect.Parameters["CameraPosition"].SetValue(cameraPosition);
 
+                        effect.Parameters["Amplitude"].SetValue(0.1f);
+                        effect.Parameters["Frequency"].SetValue(10f);
+
+                        effect.Parameters["WindSpeed"].SetValue(currentWindSpeed);
+                        effect.Parameters["Time"].SetValue(totalTime);
+                        effect.Parameters["BranchAmplitude"].SetValue(detailBranchOn ? detailBranchAmplitude : 0f);
+                        effect.Parameters["DetailAmplitude"].SetValue(detailSideToSideOn ? detailSideToSideAmplitude : 0f);
+                        effect.Parameters["BendScale"].SetValue(mainBendOn ? mainBendScale : 0f);
+
+                        effect.Parameters["Texture"].SetValue(plantTexture);
+                        effect.Parameters["InvertNormal"].SetValue(false);
+
+
                         pass.Apply();
                         // ?? What is VertexBuffer, IndexBuffer ??
                         GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
@@ -159,7 +196,6 @@ namespace FinalProject
                     }
                 }
             }
-
 
             base.Draw(gameTime);
         }
@@ -258,7 +294,7 @@ namespace FinalProject
                     Vector3.UnitY,
                     Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL)));
             lightProjection =
-                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 50f);
+                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 300f);
         }
         private void SwapTechnique()
         {
@@ -266,6 +302,8 @@ namespace FinalProject
             if (Keyboard.GetState().IsKeyDown(Keys.D1)) { currentTechnique = 1; }
             if (Keyboard.GetState().IsKeyDown(Keys.D2)) { currentTechnique = 2; }
             if (Keyboard.GetState().IsKeyDown(Keys.D3)) { currentTechnique = 3; }
+            if (Keyboard.GetState().IsKeyDown(Keys.D4)) { currentTechnique = 4; }
+            if (Keyboard.GetState().IsKeyDown(Keys.D5)) { currentTechnique = 5; }
         }
     }
 }
