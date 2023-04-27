@@ -60,6 +60,7 @@ namespace FinalProject
         bool displayInformation = true;
 
         int lineHeight = 45;
+        float windSpeedMultiplier = 1f;
 
 
 
@@ -196,6 +197,8 @@ namespace FinalProject
             {
                 pauseWind = !pauseWind;
             }
+            if (IsKeyPressed(Keys.Up)) { windSpeedMultiplier++; }
+            if (IsKeyPressed(Keys.Down)) { windSpeedMultiplier--; }
         }
         private void CameraControls()
         {
@@ -203,7 +206,7 @@ namespace FinalProject
             if (Keyboard.GetState().IsKeyDown(Keys.Right)) angleL -= 0.02f;
             if (Keyboard.GetState().IsKeyDown(Keys.Up)) angleL2 += 0.02f;
             if (Keyboard.GetState().IsKeyDown(Keys.Down)) angleL2 -= 0.02f;
-            if (IsKeyPressed(Keys.Enter)) { angle = angle2 = angleL = angleL2 = 0; distance = defaultDistance; cameraTarget = Vector3.Zero; }
+            if (IsKeyPressed(Keys.Enter)) { angle = angle2 = angleL = angleL2 = 0; distance = defaultDistance; cameraTarget = Vector3.Zero; windSpeedMultiplier = 1f; }
             if (Mouse.GetState().LeftButton == ButtonState.Pressed)
             {
                 angle -= (Mouse.GetState().X - preMouse.X) / 100f;
@@ -276,7 +279,7 @@ namespace FinalProject
                 newWindSpeed = new Vector2(x * 2f - 1f,
                     y * 2f - 1f);
 
-                newWindSpeed *= 3f;
+                newWindSpeed *= windSpeedMultiplier;
                 timeSinceLastThing += 1f;
             }
             currentWindSpeed = Vector2.SmoothStep(newWindSpeed, lastWindSpeed, timeSinceLastThing);
@@ -285,10 +288,10 @@ namespace FinalProject
         {
             _spriteBatch.Begin();
             _spriteBatch.DrawString(font, "VALUES", new Vector2(25, 25 + lineHeight * 0), Color.White);
-            _spriteBatch.DrawString(font, string.Format("(Space)  Wind Active ({0}): X={1:0.00}, Y={2:0.00}", !pauseWind ? "On" : "Off", newWindSpeed.X.ToString("0.00"), newWindSpeed.Y.ToString("0.00")), new Vector2(25, 25 + lineHeight * 1), Color.White);
+            _spriteBatch.DrawString(font, string.Format("(Space)  Wind Active ({0}): X={1:0.00}, Y={2:0.00}, Multiplier={3:0.##}", !pauseWind ? "On" : "Off", newWindSpeed.X.ToString("0.00"), newWindSpeed.Y.ToString("0.00"), windSpeedMultiplier), new Vector2(25, 25 + lineHeight * 1), Color.White);
             _spriteBatch.DrawString(font, string.Format("(Q) (W) (E) (R)  Main bending ({0}): {1:0.000}", mainBendOn ? "On" : "Off", mainBendScale), new Vector2(25, 25 + lineHeight * 2), Color.White);
             _spriteBatch.DrawString(font, string.Format("(A) (S) (D) (F) Branch bending ({0}): {1:0.000}", detailBranchOn ? "On" : "Off", detailBranchAmplitude), new Vector2(25, 25 + lineHeight * 3), Color.White);
-            _spriteBatch.DrawString(font, string.Format("(Z) (X) (C) (V) S-2-S bending ({0}): {1:0.000}", detailSideToSideOn ? "On" : "Off", detailSideToSideAmplitude), new Vector2(25, 25 + lineHeight * 4), Color.White);
+            _spriteBatch.DrawString(font, string.Format("(Z) (X) (C) (V) Leaf bending ({0}): {1:0.000}", detailSideToSideOn ? "On" : "Off", detailSideToSideAmplitude), new Vector2(25, 25 + lineHeight * 4), Color.White);
             _spriteBatch.DrawString(font, "Red: " + displayRed.ToString() + "\nGreen: " + displayGreen.ToString() + "\nBlue: " + displayBlue.ToString() + "\nAlpha: " + displayAlpha.ToString(), new Vector2(25, 25 + lineHeight * 5), Color.White);
 
             _spriteBatch.End();

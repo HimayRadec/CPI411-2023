@@ -154,9 +154,7 @@ VertexShaderOutput WindAnimationVertexShaderFunction(VertexShaderInput input)
 		input.Color.g, // Branch phase - should be the same for all verts in a leaf/branch.
 		Time,
 		input.Color.r, // edge attenuation, leaf stiffness
-		1 - input.Color.b, // branch attenuation. High values close to stem, low values furthest from stem.
-							// For some reason, Crysis uses solid blue for non-moving, and black for most movement.
-							// So we invert the blue value here.
+		input.Color.b, // branch attenuation. low values close to stem, high values furthest from stem.
 		BranchAmplitude * windStrength, // branch amplitude. Play with this until it looks good.
 		2, // Speed. Play with this until it looks good.
 		1, // Detail frequency. Keep this at 1 unless you want to have different per-leaf frequency
