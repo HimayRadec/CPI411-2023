@@ -30,7 +30,7 @@ namespace FinalProject
         float angle2 = 0;
         float angleL = 0;
         float angleL2 = 0;
-        float distance = 150;
+        float distance = 25;
         MouseState preMouse;
         Model model;
         // **** TEMPLATE ************//
@@ -38,7 +38,7 @@ namespace FinalProject
         KeyboardState previousKeyboardState;
         KeyboardState currentKeyboardState;
 
-        int currentTechnique = 5;
+        int currentTechnique = 0;
 
         Vector2 lastWindSpeed;
         Random random = new Random();
@@ -83,7 +83,7 @@ namespace FinalProject
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            model = Content.Load<Model>("SimplePlant");
+            model = Content.Load<Model>("BananaTree");
             effect = Content.Load<Effect>("SimplestPhongLighting");
             plantTexture = Content.Load<Texture2D>("logo_mg");
 
@@ -106,6 +106,7 @@ namespace FinalProject
             {
                 Exit();
             }
+            CalculateWindSpeed();
             CameraControls();
             LightControls();
             ControlParameters();
@@ -117,19 +118,9 @@ namespace FinalProject
             float timeEllapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
             totalTime += timeEllapsed;
             timeSinceLastThing -= timeEllapsed;
-            if (timeSinceLastThing < 0f)
-            {
-                lastWindSpeed = newWindSpeed;
-                float x = (float)random.NextDouble();
-                x = (float)Math.Pow(x, 3);
-                float y = (float)random.NextDouble();
-                y = (float)Math.Pow(y, 3);
-                newWindSpeed = new Vector2(x * 2f - 1f,
-                    y * 2f - 1f);
-                newWindSpeed *= 10f;
-                timeSinceLastThing += 1f;
-            }
-            currentWindSpeed = Vector2.SmoothStep(newWindSpeed, lastWindSpeed, timeSinceLastThing);
+            CalculateWindSpeed();
+
+            
 
             base.Update(gameTime);
         }
@@ -139,6 +130,11 @@ namespace FinalProject
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
+            RasterizerState rasterizerState = new RasterizerState
+            {
+                CullMode = CullMode.None
+            };
+            GraphicsDevice.RasterizerState = rasterizerState;
 
             // TODO: Add your drawing code here
             effect.CurrentTechnique = effect.Techniques[currentTechnique];
@@ -314,6 +310,22 @@ namespace FinalProject
             if (Keyboard.GetState().IsKeyDown(Keys.D3)) { currentTechnique = 3; }
             if (Keyboard.GetState().IsKeyDown(Keys.D4)) { currentTechnique = 4; }
             if (Keyboard.GetState().IsKeyDown(Keys.D5)) { currentTechnique = 5; }
+        }
+        private void CalculateWindSpeed()
+        {
+            if (timeSinceLastThing < 0f)
+            {
+                lastWindSpeed = newWindSpeed;
+                float x = (float)random.NextDouble();
+                x = (float)Math.Pow(x, 3);
+                float y = (float)random.NextDouble();
+                y = (float)Math.Pow(y, 3);
+                newWindSpeed = new Vector2(x * 2f - 1f,
+                    y * 2f - 1f);
+                newWindSpeed *= 10f;
+                timeSinceLastThing += 1f;
+            }
+            currentWindSpeed = Vector2.SmoothStep(newWindSpeed, lastWindSpeed, timeSinceLastThing);
         }
     }
 }

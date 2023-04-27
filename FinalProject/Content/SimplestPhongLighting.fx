@@ -100,11 +100,11 @@ RGB_OUTPUT RedVSMain(RGB_INPUT input)
     RGB_OUTPUT output;
 
     // Deform the vertex position based on a wave function
-    float3 displacement = Amplitude * input.Normal * sin(Frequency * Time);
-    output.Position = input.Position + float4(displacement, 0);
+    //float3 displacement = Amplitude * input.Normal * sin(Frequency * Time);
+    // output.Position = input.Position + float4(displacement, 0);
 
     // Camera Movement
-    float4 worldPosition = mul(output.Position, World);
+    float4 worldPosition = mul(input.Position, World);
     float4 viewPosition = mul(worldPosition, View);
     output.Position = mul(viewPosition, Projection);
     output.WorldPosition = worldPosition;
