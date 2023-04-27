@@ -201,7 +201,7 @@ RGB_OUTPUT RGBVSMain(RGB_INPUT input)
 }
 float4 RGBPSMain(RGB_OUTPUT input) : SV_Target
 {
-    return float4(input.Color.r, input.Color.g, input.Color.b, 0); // output only the red component of the color
+    return float4(input.Color.r, input.Color.g, input.Color.b, input.Color.a); // output only the red component of the color
 }
 technique RGBValue
 {

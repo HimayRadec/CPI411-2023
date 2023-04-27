@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Security.Cryptography;
 
 namespace FinalProject
 {
@@ -10,6 +11,7 @@ namespace FinalProject
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
+        bool test;
         // **** TEMPLATE ************//
         SpriteFont font;
         Effect effect;
@@ -54,11 +56,15 @@ namespace FinalProject
         private bool detailBranchOn = true;
         private bool detailSideToSideOn = true;
         private bool mainBendOn = true;
+        private bool pauseWind = false;
 
         Texture2D plantTexture;
 
 
-
+        private bool IsKeyPressed(Keys key)
+        {
+            return !previousKeyboardState.IsKeyDown(key) && currentKeyboardState.IsKeyDown(key);
+        }
 
 
         public FinalProject()
@@ -83,19 +89,23 @@ namespace FinalProject
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            model = Content.Load<Model>("BananaTree");
-            effect = Content.Load<Effect>("SimplestPhongLighting");
+            model = Content.Load<Model>("BananaTree2");
+            effect = Content.Load<Effect>("Bending");
             plantTexture = Content.Load<Texture2D>("logo_mg");
+            font = Content.Load<SpriteFont>("UI");
 
-            
+
+
 
             // TODO: use this.Content to load your game content here
         }
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
+            previousKeyboardState = currentKeyboardState;
+            currentKeyboardState = Keyboard.GetState();
+
+            if (IsKeyPressed(Keys.Escape)) Exit();
 
             // Update the time value based on the elapsed game time
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -106,7 +116,10 @@ namespace FinalProject
             {
                 Exit();
             }
-            CalculateWindSpeed();
+
+
+            
+
             CameraControls();
             LightControls();
             ControlParameters();
@@ -118,9 +131,11 @@ namespace FinalProject
             float timeEllapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
             totalTime += timeEllapsed;
             timeSinceLastThing -= timeEllapsed;
-            CalculateWindSpeed();
+            if (!pauseWind)
+            {
+                CalculateWindSpeed();
+            }
 
-            
 
             base.Update(gameTime);
         }
@@ -147,21 +162,21 @@ namespace FinalProject
                         effect.Parameters["World"].SetValue(mesh.ParentBone.Transform);
                         effect.Parameters["View"].SetValue(view);
                         effect.Parameters["Projection"].SetValue(projection);
-                        Matrix worldInverseTranspose = Matrix.Transpose(Matrix.Invert(mesh.ParentBone.Transform));
-                        effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTranspose);
+                        // Matrix worldInverseTranspose = Matrix.Transpose(Matrix.Invert(mesh.ParentBone.Transform));
+                        // effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTranspose);
 
-                        effect.Parameters["AmbientColor"].SetValue(ambient);
-                        effect.Parameters["AmbientIntensity"].SetValue(ambientIntensity);
+                        // effect.Parameters["AmbientColor"].SetValue(ambient);
+                        // effect.Parameters["AmbientIntensity"].SetValue(ambientIntensity);
 
-                        effect.Parameters["DiffuseColor"].SetValue(diffuseColor);
-                        effect.Parameters["DiffuseIntensity"].SetValue(1f);
+                        // effect.Parameters["DiffuseColor"].SetValue(diffuseColor);
+                        // effect.Parameters["DiffuseIntensity"].SetValue(1f);
 
-                        effect.Parameters["Shininess"].SetValue(20f);
-                        effect.Parameters["SpecularColor"].SetValue(specularColor);
-                        effect.Parameters["SpecularIntensity"].SetValue(1);
+                        //effect.Parameters["Shininess"].SetValue(20f);
+                        // effect.Parameters["SpecularColor"].SetValue(specularColor);
+                        // effect.Parameters["SpecularIntensity"].SetValue(1);
 
-                        effect.Parameters["LightPosition"].SetValue(lightPosition);
-                        effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+                        // effect.Parameters["LightPosition"].SetValue(lightPosition);
+                        // effect.Parameters["CameraPosition"].SetValue(cameraPosition);
 
                         effect.Parameters["Amplitude"].SetValue(0.1f);
                         effect.Parameters["Frequency"].SetValue(10f);
@@ -203,16 +218,16 @@ namespace FinalProject
                 }
             }
 
+            DisplayValues();
+
+
             base.Draw(gameTime);
         }
 
-        private bool IsKeyPressed(Keys key)
-        {
-            return !previousKeyboardState.IsKeyDown(key) && currentKeyboardState.IsKeyDown(key);
-        }
+        
         private void ControlParameters()
         {
-            if (currentKeyboardState.IsKeyDown(Keys.Q))
+            if (IsKeyPressed(Keys.Q))
             {
                 mainBendOn = !mainBendOn;
             }
@@ -249,6 +264,10 @@ namespace FinalProject
             if (currentKeyboardState.IsKeyDown(Keys.C))
             {
                 detailSideToSideAmplitude *= 1.01f;
+            }
+            if (IsKeyPressed(Keys.Space))
+            {
+                pauseWind = !pauseWind;
             }
         }
         private void CameraControls()
@@ -313,19 +332,33 @@ namespace FinalProject
         }
         private void CalculateWindSpeed()
         {
+
             if (timeSinceLastThing < 0f)
             {
                 lastWindSpeed = newWindSpeed;
+
                 float x = (float)random.NextDouble();
                 x = (float)Math.Pow(x, 3);
+
                 float y = (float)random.NextDouble();
                 y = (float)Math.Pow(y, 3);
                 newWindSpeed = new Vector2(x * 2f - 1f,
                     y * 2f - 1f);
-                newWindSpeed *= 10f;
+
+                newWindSpeed *= 3f;
                 timeSinceLastThing += 1f;
             }
             currentWindSpeed = Vector2.SmoothStep(newWindSpeed, lastWindSpeed, timeSinceLastThing);
+        }
+
+        private void DisplayValues()
+        {
+            _spriteBatch.Begin();
+            _spriteBatch.DrawString(font, "VALUES", new Vector2(25, 25), Color.Black);
+            _spriteBatch.DrawString(font, "Wind Velocity: (" +  (newWindSpeed.X.ToString("0.00")) + "," + (newWindSpeed.Y.ToString("0.00")) + ")", new Vector2(25, 45), Color.Black);
+            _spriteBatch.DrawString(font, "Wind Velocity: (" +  (pauseWind) + ")", new Vector2(25, 65), Color.Black);
+            _spriteBatch.End();
+
         }
     }
 }

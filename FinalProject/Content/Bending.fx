@@ -1,41 +1,47 @@
-﻿float4x4 World;
+﻿/*  
+float4 SmoothCurve(float4 x)
+{
+    return x * x * (3.0 - 2.0 * x);
+}
+float4 TriangleWave(float4 x)
+{
+    return abs(frac(x + 0.5) * 2.0 - 1.0);
+}
+float4 SmoothTriangleWave(float4 x)
+{
+    return SmoothCurve(TriangleWave(x));
+}
+
+ // Phases (object, vertex, branch)    
+float fObjPhase = dot(worldPos.xyz, 1); 
+fBranchPhase += fObjPhase; 
+float fVtxPhase = dot(vPos.xyz, 
+fDetailPhase + fBranchPhase); 
+// x is used for edges; y is used for branches    
+float2 vWavesIn = fTime + float2(fVtxPhase, fBranchPhase ); 
+// 1.975, 0.793, 0.375, 0.193 are good frequencies    
+float4 vWaves = (frac( vWavesIn.xxyy *                        
+float4(1.975, 0.793, 0.375, 0.193) ) * 2.0 - 1.0 ) * fSpeed * fDetailFreq; 
+vWaves = SmoothTriangleWave( vWaves ); 
+float2 vWavesSum = vWaves.xz + vWaves.yw; 
+// Edge (xy) and branch bending (z) 
+vPos.xyz += vWavesSum.xxy * float3(fEdgeAtten * fDetailAmp *  vNormal.xy, fBranchAtten * fBranchAmp); 
+*/
+
+float4x4 World;
 float4x4 View;
 float4x4 Projection;
-// This is the wind direction and magnitude on the horizontal plane.
-float2 WindSpeed;
 
-// This needs to keep increasing. The functions we use to simulate sine/cos
-// waves don't have a distinct period, so we can't loop time back to a certain
-// point to avoid floating point precision issues at large values. One could take
-// advantage of lulls in the wind to flip this back to zero, if desired.
-float Time;
-
-// This describes how much the overall plant bends due to the wind.
-float BendScale = 0.01;
-
-// This describes how much the overall leaf/branch oscillates in the up-and-down direction.
-float BranchAmplitude = 0.05;
-
-// This describes how much the overall leaf/branch oscillates side-to-side.
-float DetailAmplitude = 0.05;
-
-bool InvertNormal = false;
-
-#define SIDE_TO_SIDE_FREQ1 1.975
-#define SIDE_TO_SIDE_FREQ2 0.793
-#define UP_AND_DOWN_FREQ1 0.375
-#define UP_AND_DOWN_FREQ2 0.193
-
-#define FAKE_LIGHT float3(0.5744, 0.5744, 0.5744)
-
+// Based on the Crytek vegetation procedural animation
+// See the following links:
+// http://http.developer.nvidia.com/GPUGems3/gpugems3_ch16.html 
+// http://doc.crydev.net/AssetCreation/frames.html?frmname=topic&frmfile=DetailBending.html
 
 texture Texture : register(t0);
 sampler TheSampler : register(s0) = sampler_state
 {
     Texture = <Texture>;
 };
-
-
 
 struct VertexShaderInput
 {
@@ -53,20 +59,29 @@ struct VertexShaderOutput
     float3 Normal : TEXCOORD1;
 };
 
-// Functions Used for Wave Generation
 float4 SmoothCurve(float4 x)
 {
     return x * x * (3.0 - 2.0 * x);
 }
+
 float4 TriangleWave(float4 x)
 {
     return abs(frac(x + 0.5) * 2.0 - 1.0);
 }
+
 float4 SmoothTriangleWave(float4 x)
 {
     return SmoothCurve(TriangleWave(x));
 }
 
+// The suggested frequencies from the Crytek paper
+// The side-to-side motion has a much higher frequency than the up-and-down.
+#define SIDE_TO_SIDE_FREQ1 1.975
+#define SIDE_TO_SIDE_FREQ2 0.793
+#define UP_AND_DOWN_FREQ1 0.375
+#define UP_AND_DOWN_FREQ2 0.193
+
+// This provides "chaotic" motion for leaves and branches (the entire plant, really)
 void ApplyDetailBending(
 	inout float3 vPos, // The final world position of the vertex being modified
 	float3 vNormal, // The world normal for this vertex
@@ -115,6 +130,11 @@ void ApplyDetailBending(
 							vNormal.xy, fBranchAtten * fBranchAmp);
 }
 
+// This bends the entire plant in the direction of the wind.
+// vPos:		The world position of the plant *relative* to the base of the plant.
+//				(That means we assume the base is at (0, 0, 0). Ensure this before calling this function).
+// vWind:		The current direction and strength of the wind.
+// fBendScale:	How much this plant is affected by the wind.
 void ApplyMainBending(inout float3 vPos, float2 vWind, float fBendScale)
 {
 	// Calculate the length from the ground, since we'll need it.
@@ -133,7 +153,27 @@ void ApplyMainBending(inout float3 vPos, float2 vWind, float fBendScale)
     vPos.xyz = normalize(vNewPos.xyz) * fLength;
 }
 
-VertexShaderOutput MyVertexShader(VertexShaderInput input)
+// This is the wind direction and magnitude on the horizontal plane.
+float2 WindSpeed;
+
+// This needs to keep increasing. The functions we use to simulate sine/cos
+// waves don't have a distinct period, so we can't loop time back to a certain
+// point to avoid floating point precision issues at large values. One could take
+// advantage of lulls in the wind to flip this back to zero, if desired.
+float Time;
+
+// This describes how much the overall plant bends due to the wind.
+float BendScale = 0.01;
+
+// This describes how much the overall leaf/branch oscillates in the up-and-down direction.
+float BranchAmplitude = 0.05;
+
+// This describes how much the overall leaf/branch oscillates side-to-side.
+float DetailAmplitude = 0.05;
+
+bool InvertNormal = false;
+
+VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 {
     VertexShaderOutput output;
 
@@ -148,13 +188,12 @@ VertexShaderOutput MyVertexShader(VertexShaderInput input)
     vPos -= objectPosition; // Reset the vertex to base-zero
     ApplyMainBending(vPos, WindSpeed, BendScale);
     vPos += objectPosition; // Restore it.
-    output.Normal = normalize(mul(input.Normal, World));
 
     float windStrength = length(WindSpeed);
 
     ApplyDetailBending(
 		vPos,
-		output.Normal,
+		input.Normal,
 		objectPosition,
 		0, // Leaf phase - not used in this scenario, but would allow for variation in side-to-side motion
 		input.Color.g, // Branch phase - should be the same for all verts in a leaf/branch.
@@ -168,11 +207,12 @@ VertexShaderOutput MyVertexShader(VertexShaderInput input)
 		1, // Detail frequency. Keep this at 1 unless you want to have different per-leaf frequency
 		DetailAmplitude * windStrength // Detail amplitude. Play with this until it looks good.
 		);
-
+		
     float4 viewPosition = mul(float4(vPos, worldPosition.w), View);
     output.Position = mul(viewPosition, Projection);
     output.TexCoord = input.TexCoord;
     output.Color = input.Color;
+    output.Normal = normalize(mul(input.Normal, World));
     if (InvertNormal)
     {
         output.Normal = -output.Normal;
@@ -180,7 +220,9 @@ VertexShaderOutput MyVertexShader(VertexShaderInput input)
     return output;
 }
 
-float4 MyPixelShader(VertexShaderOutput input) : COLOR
+#define FAKE_LIGHT float3(0.5744, 0.5744, 0.5744)
+
+float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
     float4 value = tex2D(TheSampler, input.TexCoord);
 
@@ -193,11 +235,11 @@ float4 MyPixelShader(VertexShaderOutput input) : COLOR
     return value;
 }
 
-technique BasicColorDrawing
+technique Technique1
 {
-	pass P0
-	{
-        VertexShader = compile vs_4_0 MyVertexShader();
-        PixelShader = compile ps_4_0 MyPixelShader();
+    pass Pass1
+    {
+        VertexShader = compile vs_4_0 VertexShaderFunction();
+        PixelShader = compile ps_4_0 PixelShaderFunction();
     }
-};
+}
