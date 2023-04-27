@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Security.Cryptography;
 
 namespace FinalProject
 {
@@ -11,7 +10,6 @@ namespace FinalProject
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
-        bool test;
         // **** TEMPLATE ************//
         SpriteFont font;
         Effect effect;
@@ -24,19 +22,16 @@ namespace FinalProject
             1000f);
         Vector3 cameraPosition, cameraTarget, lightPosition;
         Matrix lightView, lightProjection;
-        Vector4 ambient = new Vector4(0, 0, 0, 0);
-        Vector4 specularColor = new Vector4(1, 1, 1, 1);
-        float ambientIntensity = 0;
-        Vector4 diffuseColor = new Vector4(1, 1, 1, 1);
         float angle = 0;
         float angle2 = 0;
         float angleL = 0;
         float angleL2 = 0;
-        float distance = 25;
         MouseState preMouse;
-        Model model;
-        // **** TEMPLATE ************//
+        Model vegetationModel;
 
+        // **** TEMPLATE ************//
+        float distance = 25;
+        float defaultDistance = 25;
         KeyboardState previousKeyboardState;
         KeyboardState currentKeyboardState;
 
@@ -50,15 +45,20 @@ namespace FinalProject
         float totalTime;
         float time;
 
-        private float detailBranchAmplitude = 0.05f;
-        private float detailSideToSideAmplitude = 0.05f;
+        private float detailBranchAmplitude = 0.005f;
+        private float defaultDetailBranchAmplitude = 0.005f;
+        private float detailSideToSideAmplitude = 0.005f;
+        private float defaultDetailSideToSideAmplitude = 0.005f;
         private float mainBendScale = 0.01f;
+        private float defaultMainBendScale = 0.01f;
         private bool detailBranchOn = true;
         private bool detailSideToSideOn = true;
         private bool mainBendOn = true;
         private bool pauseWind = false;
 
-        Texture2D plantTexture;
+        bool displayRed, displayGreen, displayBlue, displayAlpha = false;
+        bool displayInformation = true;
+
 
 
         private bool IsKeyPressed(Keys key)
@@ -81,7 +81,6 @@ namespace FinalProject
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
 
             base.Initialize();
         }
@@ -89,15 +88,9 @@ namespace FinalProject
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            model = Content.Load<Model>("BananaTree2");
-            effect = Content.Load<Effect>("Bending");
-            plantTexture = Content.Load<Texture2D>("logo_mg");
+            vegetationModel = Content.Load<Model>("BananaTree2");
+            effect = Content.Load<Effect>("WindAnimation");
             font = Content.Load<SpriteFont>("UI");
-
-
-
-
-            // TODO: use this.Content to load your game content here
         }
 
         protected override void Update(GameTime gameTime)
@@ -106,26 +99,18 @@ namespace FinalProject
             currentKeyboardState = Keyboard.GetState();
 
             if (IsKeyPressed(Keys.Escape)) Exit();
+            if (IsKeyPressed(Keys.H)) { displayInformation = !displayInformation; }
 
             // Update the time value based on the elapsed game time
-            time += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            time = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
             effect.Parameters["Time"].SetValue(time); // update the time value in the constant buffer
 
-            if (Keyboard.GetState().IsKeyDown(Keys.Escape) ||
-                GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-            {
-                Exit();
-            }
-
-
-            
-
+            SwapModels();
             CameraControls();
             LightControls();
             ControlParameters();
-            SwapTechnique();
+            DisplayRGBA();
 
-            //float time = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
 
             // Change wind every second, and smoothly interpolate to the new strength/direction.
             float timeEllapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -136,11 +121,8 @@ namespace FinalProject
                 CalculateWindSpeed();
             }
 
-
             base.Update(gameTime);
         }
-
-
 
         protected override void Draw(GameTime gameTime)
         {
@@ -153,78 +135,17 @@ namespace FinalProject
 
             // TODO: Add your drawing code here
             effect.CurrentTechnique = effect.Techniques[currentTechnique];
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            WindAnimation();
+            
+            if (displayInformation)
             {
-                foreach (ModelMesh mesh in model.Meshes)
-                {
-                    foreach (ModelMeshPart part in mesh.MeshParts)
-                    {
-                        effect.Parameters["World"].SetValue(mesh.ParentBone.Transform);
-                        effect.Parameters["View"].SetValue(view);
-                        effect.Parameters["Projection"].SetValue(projection);
-                        // Matrix worldInverseTranspose = Matrix.Transpose(Matrix.Invert(mesh.ParentBone.Transform));
-                        // effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTranspose);
-
-                        // effect.Parameters["AmbientColor"].SetValue(ambient);
-                        // effect.Parameters["AmbientIntensity"].SetValue(ambientIntensity);
-
-                        // effect.Parameters["DiffuseColor"].SetValue(diffuseColor);
-                        // effect.Parameters["DiffuseIntensity"].SetValue(1f);
-
-                        //effect.Parameters["Shininess"].SetValue(20f);
-                        // effect.Parameters["SpecularColor"].SetValue(specularColor);
-                        // effect.Parameters["SpecularIntensity"].SetValue(1);
-
-                        // effect.Parameters["LightPosition"].SetValue(lightPosition);
-                        // effect.Parameters["CameraPosition"].SetValue(cameraPosition);
-
-                        effect.Parameters["Amplitude"].SetValue(0.1f);
-                        effect.Parameters["Frequency"].SetValue(10f);
-
-                        effect.Parameters["WindSpeed"].SetValue(currentWindSpeed);
-                        effect.Parameters["Time"].SetValue(totalTime);
-                        effect.Parameters["BranchAmplitude"].SetValue(detailBranchOn ? detailBranchAmplitude : 0f);
-                        effect.Parameters["DetailAmplitude"].SetValue(detailSideToSideOn ? detailSideToSideAmplitude : 0f);
-                        effect.Parameters["BendScale"].SetValue(mainBendOn ? mainBendScale : 0f);
-
-                        effect.Parameters["Texture"].SetValue(plantTexture);
-
-                        //TODO: throw into it's own function that I can toggle on and off using a boolean
-
-                        ///effect.Parameters["InvertNormal"].SetValue(false);
-                        ///GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-                        ///effect.CurrentTechnique.Passes[0].Apply();
-
-                        ///effect.Parameters["InvertNormal"].SetValue(true);
-                        ///GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
-                        ///effect.CurrentTechnique.Passes[0].Apply();
-                        ///
-                        //
-
-
-
-                        pass.Apply();
-                        // ?? What is VertexBuffer, IndexBuffer ??
-                        GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
-                        GraphicsDevice.Indices = part.IndexBuffer;
-
-                        GraphicsDevice.DrawIndexedPrimitives(
-                            PrimitiveType.TriangleList,
-                            part.VertexOffset,
-                            part.StartIndex,
-                            part.PrimitiveCount
-                            );
-                    }
-                }
+                Information();
             }
-
-            DisplayValues();
 
 
             base.Draw(gameTime);
         }
 
-        
         private void ControlParameters()
         {
             if (IsKeyPressed(Keys.Q))
@@ -239,6 +160,7 @@ namespace FinalProject
             {
                 mainBendScale *= 1.01f;
             }
+            if (IsKeyPressed(Keys.R)) { mainBendScale = defaultMainBendScale; }
 
             if (IsKeyPressed(Keys.A))
             {
@@ -252,6 +174,7 @@ namespace FinalProject
             {
                 detailBranchAmplitude *= 1.01f;
             }
+            if (IsKeyPressed (Keys.F)) { detailBranchAmplitude = defaultDetailBranchAmplitude; }
 
             if (IsKeyPressed(Keys.Z))
             {
@@ -265,6 +188,8 @@ namespace FinalProject
             {
                 detailSideToSideAmplitude *= 1.01f;
             }
+            if (IsKeyPressed(Keys.V)) { detailSideToSideAmplitude = defaultDetailSideToSideAmplitude; }
+
             if (IsKeyPressed(Keys.Space))
             {
                 pauseWind = !pauseWind;
@@ -276,7 +201,7 @@ namespace FinalProject
             if (Keyboard.GetState().IsKeyDown(Keys.Right)) angleL -= 0.02f;
             if (Keyboard.GetState().IsKeyDown(Keys.Up)) angleL2 += 0.02f;
             if (Keyboard.GetState().IsKeyDown(Keys.Down)) angleL2 -= 0.02f;
-            if (Keyboard.GetState().IsKeyDown(Keys.S)) { angle = angle2 = angleL = angleL2 = 0; distance = 90; cameraTarget = Vector3.Zero; }
+            if (IsKeyPressed(Keys.Enter)) { angle = angle2 = angleL = angleL2 = 0; distance = defaultDistance; cameraTarget = Vector3.Zero; }
             if (Mouse.GetState().LeftButton == ButtonState.Pressed)
             {
                 angle -= (Mouse.GetState().X - preMouse.X) / 100f;
@@ -321,14 +246,18 @@ namespace FinalProject
             lightProjection =
                 Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 300f);
         }
-        private void SwapTechnique()
+        private void DisplayRGBA()
         {
-            if (Keyboard.GetState().IsKeyDown(Keys.D0)) { currentTechnique = 0; }
-            if (Keyboard.GetState().IsKeyDown(Keys.D1)) { currentTechnique = 1; }
-            if (Keyboard.GetState().IsKeyDown(Keys.D2)) { currentTechnique = 2; }
-            if (Keyboard.GetState().IsKeyDown(Keys.D3)) { currentTechnique = 3; }
-            if (Keyboard.GetState().IsKeyDown(Keys.D4)) { currentTechnique = 4; }
-            if (Keyboard.GetState().IsKeyDown(Keys.D5)) { currentTechnique = 5; }
+            if (IsKeyPressed(Keys.D1)) { displayRed = !displayRed; }
+            if (IsKeyPressed(Keys.D2)) { displayGreen = !displayGreen; }
+            if (IsKeyPressed(Keys.D3)) { displayBlue = !displayBlue; }
+            if (IsKeyPressed(Keys.D4)) { displayAlpha = !displayAlpha; }
+        }
+        private void SwapModels()
+        {
+            if (IsKeyPressed(Keys.F1)) { vegetationModel = Content.Load<Model>("BananaTree"); }
+            if (IsKeyPressed(Keys.F2)) { vegetationModel = Content.Load<Model>("BananaTree2"); }
+            if (IsKeyPressed(Keys.F3)) { vegetationModel = Content.Load<Model>("SimplePlant"); }
         }
         private void CalculateWindSpeed()
         {
@@ -350,15 +279,64 @@ namespace FinalProject
             }
             currentWindSpeed = Vector2.SmoothStep(newWindSpeed, lastWindSpeed, timeSinceLastThing);
         }
-
-        private void DisplayValues()
+        private void Information()
         {
             _spriteBatch.Begin();
-            _spriteBatch.DrawString(font, "VALUES", new Vector2(25, 25), Color.Black);
-            _spriteBatch.DrawString(font, "Wind Velocity: (" +  (newWindSpeed.X.ToString("0.00")) + "," + (newWindSpeed.Y.ToString("0.00")) + ")", new Vector2(25, 45), Color.Black);
-            _spriteBatch.DrawString(font, "Wind Velocity: (" +  (pauseWind) + ")", new Vector2(25, 65), Color.Black);
+            _spriteBatch.DrawString(font, "VALUES", new Vector2(25, 25), Color.White);
+            _spriteBatch.DrawString(font, string.Format("(Space)  Wind Active ({0}): X={1:0.00}, Y={2:0.00}", !pauseWind ? "On" : "Off", newWindSpeed.X.ToString("0.00"), newWindSpeed.Y.ToString("0.00")), new Vector2(25, 60), Color.White);
+            _spriteBatch.DrawString(font, string.Format("(Q) (W) (E) (R)  Main bending ({0}): {1:0.000}", mainBendOn ? "On" : "Off", mainBendScale), new Vector2(25, 90), Color.White);
+            _spriteBatch.DrawString(font, string.Format("(A) (S) (D) (F) Branch bending ({0}): {1:0.000}", detailBranchOn ? "On" : "Off", detailBranchAmplitude), new Vector2(25, 120), Color.White);
+            _spriteBatch.DrawString(font, string.Format("(Z) (X) (C) (V) S-2-S bending ({0}): {1:0.000}", detailSideToSideOn ? "On" : "Off", detailSideToSideAmplitude), new Vector2(25, 150), Color.White);
+            _spriteBatch.DrawString(font, "Red: " + displayRed.ToString() + "\nGreen: " + displayGreen.ToString() + "\nBlue: " + displayBlue.ToString() + "\nAlpha: " + displayAlpha.ToString(), new Vector2(25, 180), Color.White);
+
             _spriteBatch.End();
 
         }
+        private void WindAnimation()
+        {
+            // Set wind stuff that varies each time:
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            {
+                foreach (ModelMesh mesh in vegetationModel.Meshes)
+                {
+                    foreach (ModelMeshPart part in mesh.MeshParts)
+                    {
+                        effect.Parameters["WindSpeed"].SetValue(currentWindSpeed);
+                        effect.Parameters["Time"].SetValue(totalTime);
+                        effect.Parameters["BranchAmplitude"].SetValue(detailBranchOn ? detailBranchAmplitude : 0f);
+                        effect.Parameters["DetailAmplitude"].SetValue(detailSideToSideOn ? detailSideToSideAmplitude : 0f);
+                        effect.Parameters["BendScale"].SetValue(mainBendOn ? mainBendScale : 0f);
+
+                        effect.Parameters["displayRed"].SetValue(displayRed);
+                        effect.Parameters["displayGreen"].SetValue(displayGreen);
+                        effect.Parameters["displayBlue"].SetValue(displayBlue);
+                        effect.Parameters["displayAlpha"].SetValue(displayAlpha);
+
+
+                        effect.Parameters["View"].SetValue(view);
+                        effect.Parameters["Projection"].SetValue(projection); 
+                        effect.Parameters["World"].SetValue(world);
+
+                        // Since the leaf polygons are one-sided, draw the thing with two different cull-modes.
+                        effect.Parameters["InvertNormal"].SetValue(false);
+                        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+                        effect.CurrentTechnique.Passes[0].Apply();
+                        GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
+                        GraphicsDevice.Indices = part.IndexBuffer;
+                        GraphicsDevice.DrawIndexedPrimitives( PrimitiveType.TriangleList, part.VertexOffset, part.StartIndex, part.PrimitiveCount );
+
+                        // We need to reverse the normal for proper lighting when using reverse winding order.
+                        effect.Parameters["InvertNormal"].SetValue(true);
+                        GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
+                        effect.CurrentTechnique.Passes[0].Apply();
+                        GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, part.VertexOffset, part.StartIndex, part.PrimitiveCount);
+
+                        // Restore standard state
+                        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+                    }
+                }
+            }
+        }
+        
     }
 }

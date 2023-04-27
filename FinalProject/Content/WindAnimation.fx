@@ -2,10 +2,10 @@
 float4x4 View;
 float4x4 Projection;
 
-// Based on the Crytek vegetation procedural animation
+float windActive;
+
 // See the following links:
 // http://http.developer.nvidia.com/GPUGems3/gpugems3_ch16.html 
-// http://doc.crydev.net/AssetCreation/frames.html?frmname=topic&frmfile=DetailBending.html
 
 texture Texture : register(t0);
 sampler TheSampler : register(s0) = sampler_state
@@ -44,14 +44,12 @@ float4 SmoothTriangleWave(float4 x)
     return SmoothCurve(TriangleWave(x));
 }
 
-// The suggested frequencies from the Crytek paper
-// The side-to-side motion has a much higher frequency than the up-and-down.
+// The suggested frequencies  
 #define SIDE_TO_SIDE_FREQ1 1.975
 #define SIDE_TO_SIDE_FREQ2 0.793
 #define UP_AND_DOWN_FREQ1 0.375
 #define UP_AND_DOWN_FREQ2 0.193
 
-// This provides "chaotic" motion for leaves and branches (the entire plant, really)
 void ApplyDetailBending(
 	inout float3 vPos, // The final world position of the vertex being modified
 	float3 vNormal, // The world normal for this vertex
@@ -67,24 +65,17 @@ void ApplyDetailBending(
 							// this could be used to let you additionally control the speed per vertex).
 	float fDetailAmp)		// Controls how much back and forth
 {
-	// Phases (object, vertex, branch)
-	// fObjPhase: This ensures phase is different for different plant instances, but it should be
-	// the same value for all vertices of the same plant.
+	// Phases (object, vertex, branch) 
     float fObjPhase = dot(objectPosition.xyz, 1);
 
-	// In this sample fBranchPhase is always zero, but if you want you could somehow supply a
-	// different phase for each branch.
+	// fBranchPhase is always zero, but if you want you could somehow supply a different phase for each branch.
     fBranchPhase += fObjPhase;
 
-	// Detail phase is (in this sample) controlled by the GREEN vertex color. In your modelling program,
-	// assign the same "random" phase color to each vertex in a single leaf/branch so that the whole leaf/branch
-	// moves together.
+	// Detail phase is controlled by the GREEN vertex color. 
     float fVtxPhase = dot(vPos.xyz, fDetailPhase + fBranchPhase);
 
     float2 vWavesIn = fTime + float2(fVtxPhase, fBranchPhase);
-    float4 vWaves = (frac(vWavesIn.xxyy *
-					   float4(SIDE_TO_SIDE_FREQ1, SIDE_TO_SIDE_FREQ2, UP_AND_DOWN_FREQ1, UP_AND_DOWN_FREQ2)) *
-					   2.0 - 1.0) * fSpeed * fDetailFreq;
+    float4 vWaves = (frac(vWavesIn.xxyy * float4(SIDE_TO_SIDE_FREQ1, SIDE_TO_SIDE_FREQ2, UP_AND_DOWN_FREQ1, UP_AND_DOWN_FREQ2)) * 2.0 - 1.0) * fSpeed * fDetailFreq;
     vWaves = SmoothTriangleWave(vWaves);
     float2 vWavesSum = vWaves.xz + vWaves.yw;
 
@@ -93,9 +84,7 @@ void ApplyDetailBending(
 	//  In this sample, this is controlled by the blue vertex color.
 	// -fEdgeAtten controls movement in the plane of the leaf/branch. It is controlled by the
 	//  red vertex color in this sample. It is supposed to represent "leaf stiffness". Generally, it
-	//  should be 0 in the middle of the leaf (maximum stiffness), and 1 on the outer edges.
-	// -Note that this is different from the Crytek code, in that we use vPos.xzy instead of vPos.xyz,
-	//  because I treat y as the up-and-down direction.
+	//  should be 0 in the middle of the leaf (maximum stiffness), and 1 on the outer edges. 
     vPos.xzy += vWavesSum.xxy * float3(fEdgeAtten * fDetailAmp * vNormal.xy, fBranchAtten * fBranchAmp);
 }
 
@@ -125,10 +114,7 @@ void ApplyMainBending(inout float3 vPos, float2 vWind, float fBendScale)
 // This is the wind direction and magnitude on the horizontal plane.
 float2 WindSpeed;
 
-// This needs to keep increasing. The functions we use to simulate sine/cos
-// waves don't have a distinct period, so we can't loop time back to a certain
-// point to avoid floating point precision issues at large values. One could take
-// advantage of lulls in the wind to flip this back to zero, if desired.
+// This needs to keep increasing.  
 float Time;
 
 // This describes how much the overall plant bends due to the wind.
@@ -142,7 +128,7 @@ float DetailAmplitude = 0.05;
 
 bool InvertNormal = false;
 
-VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
+VertexShaderOutput WindAnimationVertexShaderFunction(VertexShaderInput input)
 {
     VertexShaderOutput output;
 
@@ -191,24 +177,37 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 
 #define FAKE_LIGHT float3(0.5744, 0.5744, 0.5744)
 
-float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
-{
-    float4 value = tex2D(TheSampler, input.TexCoord);
+bool displayRed, displayGreen, displayBlue, displayAlpha;
+float red, green, blue, alpha;
 
-	// Just some quick and dirty lighting.
-    float brightNess = dot(input.Normal, FAKE_LIGHT); // Directional
-    brightNess = brightNess * 0.4 + 0.6; // Add in ambient (60%)
+float4 WindAnimationPixelShaderFunction(VertexShaderOutput input) : COLOR0
+{
+    float4 value = float4(input.Color.rgb, 1.0);
+
+	// Lighting
+    float brightNess = dot(input.Normal, float3(0.5744, 0.5744, 0.5744));
+    brightNess = brightNess * 0.4 + 0.6;
     value.rgb *= brightNess;
 
     clip(value.a - 0.5); // Alpha test for leaf outlines.
+
+    red = displayRed ? value.r : 0;
+    green = displayGreen ? value.g : 0;
+    blue = displayBlue ? value.b : 0;
+    alpha = displayAlpha ? value.a : 0;
+
+    
+    // Display RGBA values as color
+    value.rgba = float4(red, green, blue, alpha);
     return value;
 }
+
 
 technique Technique1
 {
     pass Pass1
     {
-        VertexShader = compile vs_4_0 VertexShaderFunction();
-        PixelShader = compile ps_4_0 PixelShaderFunction();
+        VertexShader = compile vs_4_0 WindAnimationVertexShaderFunction();
+        PixelShader = compile ps_4_0 WindAnimationPixelShaderFunction();
     }
 }

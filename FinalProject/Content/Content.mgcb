@@ -139,3 +139,9 @@
 /processorParam:TextureFormat=Compressed
 /build:UI.spritefont
 
+#begin WindAnimation.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:WindAnimation.fx
+
