@@ -51,13 +51,15 @@ namespace FinalProject
         private float defaultDetailSideToSideAmplitude = 0.005f;
         private float mainBendScale = 0.01f;
         private float defaultMainBendScale = 0.01f;
-        private bool detailBranchOn = true;
-        private bool detailSideToSideOn = true;
-        private bool mainBendOn = true;
-        private bool pauseWind = false;
+        private bool detailBranchOn = false;
+        private bool detailSideToSideOn = false;
+        private bool mainBendOn = false;
+        private bool pauseWind = true;
 
         bool displayRed, displayGreen, displayBlue, displayAlpha = false;
         bool displayInformation = true;
+
+        int lineHeight = 45;
 
 
 
@@ -282,12 +284,12 @@ namespace FinalProject
         private void Information()
         {
             _spriteBatch.Begin();
-            _spriteBatch.DrawString(font, "VALUES", new Vector2(25, 25), Color.White);
-            _spriteBatch.DrawString(font, string.Format("(Space)  Wind Active ({0}): X={1:0.00}, Y={2:0.00}", !pauseWind ? "On" : "Off", newWindSpeed.X.ToString("0.00"), newWindSpeed.Y.ToString("0.00")), new Vector2(25, 60), Color.White);
-            _spriteBatch.DrawString(font, string.Format("(Q) (W) (E) (R)  Main bending ({0}): {1:0.000}", mainBendOn ? "On" : "Off", mainBendScale), new Vector2(25, 90), Color.White);
-            _spriteBatch.DrawString(font, string.Format("(A) (S) (D) (F) Branch bending ({0}): {1:0.000}", detailBranchOn ? "On" : "Off", detailBranchAmplitude), new Vector2(25, 120), Color.White);
-            _spriteBatch.DrawString(font, string.Format("(Z) (X) (C) (V) S-2-S bending ({0}): {1:0.000}", detailSideToSideOn ? "On" : "Off", detailSideToSideAmplitude), new Vector2(25, 150), Color.White);
-            _spriteBatch.DrawString(font, "Red: " + displayRed.ToString() + "\nGreen: " + displayGreen.ToString() + "\nBlue: " + displayBlue.ToString() + "\nAlpha: " + displayAlpha.ToString(), new Vector2(25, 180), Color.White);
+            _spriteBatch.DrawString(font, "VALUES", new Vector2(25, 25 + lineHeight * 0), Color.White);
+            _spriteBatch.DrawString(font, string.Format("(Space)  Wind Active ({0}): X={1:0.00}, Y={2:0.00}", !pauseWind ? "On" : "Off", newWindSpeed.X.ToString("0.00"), newWindSpeed.Y.ToString("0.00")), new Vector2(25, 25 + lineHeight * 1), Color.White);
+            _spriteBatch.DrawString(font, string.Format("(Q) (W) (E) (R)  Main bending ({0}): {1:0.000}", mainBendOn ? "On" : "Off", mainBendScale), new Vector2(25, 25 + lineHeight * 2), Color.White);
+            _spriteBatch.DrawString(font, string.Format("(A) (S) (D) (F) Branch bending ({0}): {1:0.000}", detailBranchOn ? "On" : "Off", detailBranchAmplitude), new Vector2(25, 25 + lineHeight * 3), Color.White);
+            _spriteBatch.DrawString(font, string.Format("(Z) (X) (C) (V) S-2-S bending ({0}): {1:0.000}", detailSideToSideOn ? "On" : "Off", detailSideToSideAmplitude), new Vector2(25, 25 + lineHeight * 4), Color.White);
+            _spriteBatch.DrawString(font, "Red: " + displayRed.ToString() + "\nGreen: " + displayGreen.ToString() + "\nBlue: " + displayBlue.ToString() + "\nAlpha: " + displayAlpha.ToString(), new Vector2(25, 25 + lineHeight * 5), Color.White);
 
             _spriteBatch.End();
 
