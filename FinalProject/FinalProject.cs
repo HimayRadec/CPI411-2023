@@ -33,8 +33,6 @@ namespace FinalProject
         float distance = 150;
         MouseState preMouse;
         Model model;
-        Model[] models;
-        Texture2D texture;
         // **** TEMPLATE ************//
 
         KeyboardState previousKeyboardState;
@@ -179,7 +177,19 @@ namespace FinalProject
                         effect.Parameters["BendScale"].SetValue(mainBendOn ? mainBendScale : 0f);
 
                         effect.Parameters["Texture"].SetValue(plantTexture);
-                        effect.Parameters["InvertNormal"].SetValue(false);
+
+                        //TODO: throw into it's own function that I can toggle on and off using a boolean
+
+                        ///effect.Parameters["InvertNormal"].SetValue(false);
+                        ///GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+                        ///effect.CurrentTechnique.Passes[0].Apply();
+
+                        ///effect.Parameters["InvertNormal"].SetValue(true);
+                        ///GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
+                        ///effect.CurrentTechnique.Passes[0].Apply();
+                        ///
+                        //
+
 
 
                         pass.Apply();
