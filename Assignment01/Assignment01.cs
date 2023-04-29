@@ -298,6 +298,8 @@ namespace Assignment01
             GraphicsDevice.BlendState = BlendState.Opaque; // BUG: Causes the Objects to render weirdley
 
 
+
+
             // TODO: Add your drawing code here
 
             effect.CurrentTechnique = effect.Techniques[currentShader];

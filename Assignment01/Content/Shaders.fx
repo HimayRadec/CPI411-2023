@@ -53,13 +53,13 @@ VertexShaderOutput GourandVertexShaderFunction(VertexInput input)
 	float3 R = reflect(-L, N);
 	float4 ambient = AmbientColor * AmbientIntensity;
 	float4 diffuse = DiffuseIntensity * DiffuseColor * max(0, dot(N, L));
-	float4 specular = pow(max(0, dot(V, R)), Shininess) * SpecularColor * SpecularIntensity;
+    float4 specular = pow(saturate(max(0, dot(V, R))), Shininess) * SpecularColor * SpecularIntensity;
 	output.Color = saturate(ambient + diffuse + specular);
 	return output;
 }
 float4 GourandPixelShaderFunction(VertexShaderOutput input) : COLOR
 {
-	return input.Color;
+    return float4(input.Color.rgb, 1);
 }
 technique MyTechnique
 {
@@ -78,7 +78,7 @@ VertexShaderOutput PhongVertexShaderFunction(VertexInput input)
 	float4 viewPosition = mul(worldPosition, View);
 	output.Position = mul(viewPosition, Projection);
 	output.WorldPosition = worldPosition;
-	output.Normal = mul(input.Normal, WorldInverseTranspose);
+    output.Normal = normalize(mul(input.Normal, WorldInverseTranspose));
 	output.Color = 0;
 
 	return output;
@@ -89,11 +89,14 @@ float4 PhongPixelShaderFunction(VertexShaderOutput input) : COLOR0
 	float3 N = normalize(input.Normal.xyz);
 	float3 V = normalize(CameraPosition - input.WorldPosition.xyz);
 	float3 L = normalize(LightPosition);
-	float3 R = reflect(-L, N);
+    float3 R = normalize(reflect(-L, N));
 
 	float4 ambient = AmbientColor * AmbientIntensity;
 	float4 diffuse = DiffuseIntensity * DiffuseColor * max(0, dot(N, L));
-	float4 specular = pow(max(0, dot(V, R)), Shininess) * SpecularColor * SpecularIntensity;
+    float4 specular = pow(saturate(max(0, dot(R, V))), Shininess) * SpecularColor * SpecularIntensity;
+    if (dot(N, L) < 0)
+        specular = 0;
+	
 	float4 color = saturate(ambient + diffuse + specular);
 	
 	
@@ -112,28 +115,28 @@ technique Phong
 // PhongBlinn
 VertexShaderOutput PhongBlinnVertexShaderFunction(VertexInput input)
 {
-	VertexShaderOutput output;
-	float4 worldPosition = mul(input.Position, World);
-	output.WorldPosition = worldPosition;
+    VertexShaderOutput output;
+    float4 worldPosition = mul(input.Position, World);
+    float4 viewPosition = mul(worldPosition, View);
+    output.Position = mul(viewPosition, Projection);
+    output.WorldPosition = worldPosition;
+    output.Normal = normalize(mul(input.Normal, WorldInverseTranspose));
+    output.Color = 0;
 
-	output.Normal = mul(input.Normal, WorldInverseTranspose);
-	output.Position = mul(worldPosition, View);
-	output.Position = mul(output.Position, Projection);
-
-	return output;
+    return output;
 
 }
 float4 PhongBlinnPixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
+    float3 N = normalize(input.Normal.xyz);
 	float3 L = normalize(LightPosition);
 	float3 V = normalize(CameraPosition - input.WorldPosition.xyz);
 	float3 H = normalize(L + V);
-	float4 diffuse = DiffuseIntensity * DiffuseColor * max(dot(input.Normal.xyz, L), 0);
-	float4 specular = SpecularIntensity * SpecularColor * pow(max(dot(input.Normal.xyz, H), 0), Shininess);
-
-	float4 ambient = AmbientIntensity * AmbientColor;
-
-	return ambient + diffuse + specular;
+	
+    float4 color = DiffuseIntensity * DiffuseColor * max(0, dot(N, L)) + pow(saturate(dot(N, H)), Shininess) * SpecularColor * SpecularIntensity;
+    color.a = 1;
+    return color;
+	
 }
 technique PhongBlinn
 {
@@ -147,32 +150,29 @@ technique PhongBlinn
 // Schlick UNFINISHED
 VertexShaderOutput SchlickVertexShaderFunction(VertexInput input)
 {
-	VertexShaderOutput output;
-	float4 worldPosition = mul(input.Position, World);
-	output.WorldPosition = worldPosition;
+    VertexShaderOutput output;
+    float4 worldPosition = mul(input.Position, World);
+    float4 viewPosition = mul(worldPosition, View);
+    output.Position = mul(viewPosition, Projection);
+    output.WorldPosition = worldPosition;
+    output.Normal = normalize(mul(input.Normal, WorldInverseTranspose));
+    output.Color = 0;
 
-	output.Normal = mul(input.Normal, WorldInverseTranspose);
-	output.Position = mul(worldPosition, View);
-	output.Position = mul(output.Position, Projection);
-
-	return output;
+    return output;
 }
 float4 SchlickPixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
-
+    float3 N = normalize(input.Normal.xyz);
 	float3 L = normalize(LightPosition);
 	float3 V = normalize(CameraPosition - input.WorldPosition.xyz);
-	float3 H = normalize(L + V);
-	float4 diffuse = DiffuseIntensity * DiffuseColor * max(dot(input.Normal.xyz, L), 0);
+	float3 R = reflect(-L, N);
+    float3 T = max(0, dot(V, R));
+    float P = T / (Shininess - T * Shininess + T);
 
-	float r = SpecularIntensity + (1 - SpecularIntensity) * pow(1 - max(dot(L, V), 0), 5);
-	float4 specular = SpecularIntensity * SpecularColor * pow(max(dot(input.Normal.xyz, H), 0), Shininess) * r;
-
-	float4 ambient = AmbientIntensity * AmbientColor;
-
-	return ambient + diffuse + specular;
-
-}
+    float4 color = DiffuseIntensity * DiffuseColor * max(0, dot(N, L)) + P * SpecularColor * SpecularIntensity;
+    color.a = 1;
+    return color;
+}	
 technique Schlick
 {
 	pass pass1
@@ -257,10 +257,15 @@ VertexShaderOutput HalfLifeVertexShaderFunction(VertexInput input)
 	return output;
 
 }
-float4 HalfLifePixelShaderFunction(VertexShaderOutput input) : COLOR
+float4 HalfLifePixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
-
-	return input.Color;
+    float3 N = normalize(input.Normal.xyz);
+    float3 V = normalize(CameraPosition - input.WorldPosition.xyz);
+    float3 L = normalize(LightPosition);
+	
+    float4 color = DiffuseIntensity * DiffuseColor * pow(0.5 * (dot(N, L) + 1), 2);
+    color.a = 1;
+    return color;
 
 }
 technique HalfLife
