@@ -60,9 +60,9 @@ namespace Lab06
             // *** Skybox.cs Constructor need to access to "skybox/Skybox"
             string[] skyboxTextures =
             {
-                "skybox/SunsetPNG2", "skybox/SunsetPNG1",
-                "skybox/SunsetPNG4", "skybox/SunsetPNG3",
-                "skybox/SunsetPNG6", "skybox/SunsetPNG5"
+                "SunsetPNG2", "SunsetPNG1",
+                "SunsetPNG4", "SunsetPNG3",
+                "SunsetPNG6", "SunsetPNG5"
             };
             skybox = new Skybox(skyboxTextures, Content, GraphicsDevice);
 

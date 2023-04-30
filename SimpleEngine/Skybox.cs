@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Content; // *** import Content class
@@ -18,7 +13,8 @@ namespace CPI411.SimpleEngine
         private float size = 100f; // *** Changed to 100!!!
         public Skybox(string[] skyboxTextures, ContentManager Content, GraphicsDevice g)
         {
-            skyBox = Content.Load<Model>("skybox/cube"); // *** Project should have a skybox/cube.fbx
+            // skyBox = Content.Load<Model>("skybox/cube"); // *** Project should have a skybox/cube.fbx
+            skyBox = Content.Load<Model>("Helicopter"); // *** Project should have a skybox/cube.fbx
             skyBoxEffect = Content.Load<Effect>("Skybox"); //*** Project should have Skybox.fx
 
             skyBoxTexture = new TextureCube(g, 512, false, SurfaceFormat.Color);
