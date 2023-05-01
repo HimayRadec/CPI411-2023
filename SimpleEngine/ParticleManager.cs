@@ -114,6 +114,14 @@ namespace CPI411.SimpleEngine
                 }
             }
         }
+
+        public void Bounce(float groundY, float resilence, float friction)
+        {
+            for (int i = 0; i < particleMax; i++)
+            {
+                particles[i].Bounce(groundY, resilence, friction);
+            }
+        }
         public void Draw(GraphicsDevice g)
         {
             if (activeMax <= 0) return;
@@ -123,8 +131,8 @@ namespace CPI411.SimpleEngine
             g.DrawIndexedPrimitives(
                 PrimitiveType.TriangleList,
                 0,
-                //0, 
-                //activeMax * 4, 
+                0, 
+                activeMax * 4, 
                 0,
                 activeMax * 2);
         }
