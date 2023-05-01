@@ -3,16 +3,6 @@ float4x4 View;
 float4x4 Projection;
 float4x4 WorldInverseTranspose;
 
-float3 CameraPosition;
-float3 LightPosition;
-
-float4 DiffuseColor;
-float DiffuseIntensity;
-
-float4 SpecularColor;
-float SpecularColorIntensity;
-float Shininess;
-
 
 float NormalMapRepeatU;
 float NormalMapRepeatV;
@@ -71,8 +61,6 @@ struct VertexShaderOutput
     float3 Tangent : TANGENT0;
     float3 Binormal : BINORMAL0;
     float2 TexCoord : TEXCOORD0;
-    float3 Position3D : TEXCOORD4; // ???????????????
-    
 };
 
 VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
@@ -88,70 +76,38 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
     
     output.TexCoord = input.TexCoord;
     output.TexCoord.xy *= float2(NormalMapRepeatU, NormalMapRepeatV);
-    output.Position3D = worldPosition.xyz; // ???????????????
-    
     
     return output;
 }
 
-float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
+float4 PixelShaderFuntion(VertexShaderOutput input) : COLOR0
 {
-    float3 L = normalize(LightPosition - input.Position3D); // ?????????????
-    float3 V = normalize(CameraPosition - input.Position3D); // ??????????????
-    float3 N = normalize(input.Normal);
-    float3 T = normalize(input.Tangent);
-    float3 B = normalize(input.Binormal);
-    float3 H = normalize(L + V);
+    float2 texCoord = input.TexCoord;
     
-    float3 normalTex = tex2D(NormalMapSamplerLinear, input.TexCoord).xyz;
-    if (MipMap == 1)
-        normalTex = tex2D(NormalMapSamplerNone, input.TexCoord).xyz;
+    float3 normalTex = tex2D(NormalMapSamplerLinear, texCoord).rgb;
+    if (MipMap == 0) normalTex = tex2D(NormalMapSamplerNone, texCoord).rgb;
     
     normalTex = Expand(normalTex);
-    
     normalTex.x *= (1 + 0.2 * (BumpHeight - 5));
     normalTex.y *= (1 + 0.2 * (BumpHeight - 5));
     normalTex.z *= (1 + 0.2 * (5 - BumpHeight));
     
     float3x3 TangentToWorld;
-    if (NormalizeTangentFrame == 1)
-    {
-        TangentToWorld[0] = normalize(input.Tangent);
-        TangentToWorld[1] = normalize(input.Binormal);
-        TangentToWorld[2] = normalize(input.Normal);
-    }
-    if (NormalizeTangentFrame == 0)
-    {
-        TangentToWorld[0] = input.Tangent;
-        TangentToWorld[1] = input.Binormal;
-        TangentToWorld[2] = input.Normal;
-    }
+    TangentToWorld[0] = (input.Tangent);
+    TangentToWorld[1] = (input.Binormal);
+    TangentToWorld[2] = (input.Normal);
     float3 bumpNormal = mul(normalTex, TangentToWorld);
-    float3 nForDiffuse = bumpNormal;
-    float3 nForSpecular = bumpNormal;
     
-    if (NormalizeNormalMap == 1)
-    {
-        nForDiffuse = normalize(nForDiffuse);
-        nForSpecular = normalize(nForSpecular);
-    }
-    else if (NormalizeNormalMap == 2)
-        nForDiffuse = normalize(nForDiffuse);
-    else if (NormalizeNormalMap == 3)
-        nForSpecular = normalize(nForSpecular);
-    
-    float4 diffuse = DiffuseColor * DiffuseIntensity * max(0, (dot(nForDiffuse, L)));
-    float4 specular = SpecularColor * SpecularColorIntensity * pow(saturate(dot(H, nForSpecular)), Shininess);
-    float4 finalColor = diffuse + specular;
-    finalColor.a = 1;
-    return finalColor;
-
+    if (NormalizeNormalMap > 0) bumpNormal = normalize(bumpNormal);
+    return float4(bumpNormal, 1.0);
 }
+
 technique Technique1
 {
     pass Pass1
     {
         VertexShader = compile vs_4_0 VertexShaderFunction();
         PixelShader = compile ps_4_0 PixelShaderFunction();
+
     }
 }

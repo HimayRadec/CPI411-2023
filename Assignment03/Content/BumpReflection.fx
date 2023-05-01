@@ -23,6 +23,15 @@ int NormalizeNormalMap;
 int MipMap;
 
 texture normapMap;
+samplerCUBE SkyBoxSampler = sampler_state
+{
+    texture = <environmentMap>;
+    magfilter = LINEAR;
+    minfilter = LINEAR;
+    mipfilter = LINEAR;
+    AddressU = Mirror;
+    AddressV = Mirror;
+};
 
 sampler NormalMapSamplerLinear = sampler_state
 {
@@ -102,49 +111,18 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
     float3 T = normalize(input.Tangent);
     float3 B = normalize(input.Binormal);
     float3 H = normalize(L + V);
+    float3 I = normalize(input.Position3D - CameraPosition);
     
-    float3 normalTex = tex2D(NormalMapSamplerLinear, input.TexCoord).xyz;
-    if (MipMap == 1)
-        normalTex = tex2D(NormalMapSamplerNone, input.TexCoord).xyz;
-    
-    normalTex = Expand(normalTex);
-    
+    float3 normalTex = tex2D(NormalMapSamplerLinear, input.TexCoord).xyz; // input.NormalTexCoord ??????
+    normalTex = 2 * (normalTex - 0.5);
     normalTex.x *= (1 + 0.2 * (BumpHeight - 5));
     normalTex.y *= (1 + 0.2 * (BumpHeight - 5));
     normalTex.z *= (1 + 0.2 * (5 - BumpHeight));
     
-    float3x3 TangentToWorld;
-    if (NormalizeTangentFrame == 1)
-    {
-        TangentToWorld[0] = normalize(input.Tangent);
-        TangentToWorld[1] = normalize(input.Binormal);
-        TangentToWorld[2] = normalize(input.Normal);
-    }
-    if (NormalizeTangentFrame == 0)
-    {
-        TangentToWorld[0] = input.Tangent;
-        TangentToWorld[1] = input.Binormal;
-        TangentToWorld[2] = input.Normal;
-    }
-    float3 bumpNormal = mul(normalTex, TangentToWorld);
-    float3 nForDiffuse = bumpNormal;
-    float3 nForSpecular = bumpNormal;
-    
-    if (NormalizeNormalMap == 1)
-    {
-        nForDiffuse = normalize(nForDiffuse);
-        nForSpecular = normalize(nForSpecular);
-    }
-    else if (NormalizeNormalMap == 2)
-        nForDiffuse = normalize(nForDiffuse);
-    else if (NormalizeNormalMap == 3)
-        nForSpecular = normalize(nForSpecular);
-    
-    float4 diffuse = DiffuseColor * DiffuseIntensity * max(0, (dot(nForDiffuse, L)));
-    float4 specular = SpecularColor * SpecularColorIntensity * pow(saturate(dot(H, nForSpecular)), Shininess);
-    float4 finalColor = diffuse + specular;
-    finalColor.a = 1;
-    return finalColor;
+    float3 bumpNormal = mul(normalTex, float3x3(T, B, N));
+    float3 R = reflect(I, bumpNormal); // Could be T instead of I ????
+    float4 reflectedColor = texCUBE(SkyBoxSampler, R);
+    return reflectedColor;
 
 }
 technique Technique1

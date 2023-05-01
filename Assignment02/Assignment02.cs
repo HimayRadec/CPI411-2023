@@ -10,12 +10,14 @@ namespace Assignment02
 {
     public class Assignment02 : Game
     {
+
+        #region - Default Variables - 
+
         private GraphicsDeviceManager _graphics;
         private SpriteBatch spriteBatch;
         SpriteFont font;
         Effect effect;
 
-        Skybox skybox;
         Matrix world = Matrix.Identity;
         Matrix view = Matrix.CreateLookAt(new Vector3(20, 0, 0), new Vector3(0, 0, 0), Vector3.UnitY);
         Matrix projection = Matrix.CreatePerspectiveFieldOfView(
@@ -36,6 +38,23 @@ namespace Assignment02
         Model model;
         Texture2D texture;
 
+        MouseState preMouse;
+        KeyboardState previousKeyboardState;
+        KeyboardState currentKeyboardState;
+        private bool IsKeyPressed(Keys key)
+        {
+            return !previousKeyboardState.IsKeyDown(key) && currentKeyboardState.IsKeyDown(key);
+        }
+
+
+
+        #endregion
+
+
+        #region - Assignment02 Variables -
+
+        Skybox skybox;
+
         float reflectivity = 0.99f;
         float refractivity = 1.01f;
         Vector3 etaRatio = new Vector3(0.9f, 0.8f, 0.7f);
@@ -43,14 +62,7 @@ namespace Assignment02
         int shaderMode = 0;
         bool showMenu, showValues;
 
-        MouseState preMouse;
-        KeyboardState previousKeyboardState;
-        KeyboardState currentKeyboardState;
-
-        private bool IsKeyPressed(Keys key)
-        {
-            return !previousKeyboardState.IsKeyDown(key) && currentKeyboardState.IsKeyDown(key);
-        }
+        #endregion
 
         public Assignment02()
         {

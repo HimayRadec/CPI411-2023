@@ -14,7 +14,7 @@ namespace CPI411.SimpleEngine
         public Skybox(string[] skyboxTextures, ContentManager Content, GraphicsDevice g)
         {
             // skyBox = Content.Load<Model>("skybox/cube"); // *** Project should have a skybox/cube.fbx
-            skyBox = Content.Load<Model>("Helicopter"); // *** Project should have a skybox/cube.fbx
+            skyBox = Content.Load<Model>("Cube"); // *** Project should have a skybox/cube.fbx
             skyBoxEffect = Content.Load<Effect>("Skybox"); //*** Project should have Skybox.fx
 
             skyBoxTexture = new TextureCube(g, 512, false, SurfaceFormat.Color);
