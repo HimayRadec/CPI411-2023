@@ -60,15 +60,16 @@ namespace Assignment02
         Vector3 etaRatio = new Vector3(0.9f, 0.8f, 0.7f);
         Vector3 fresnalTerm = new Vector3(0.0f, 0.5f, 3.0f);
         int shaderMode = 0;
-        bool showMenu, showValues;
+        bool showMenu = true;
+        bool showValues = true;
 
         #endregion
 
         public Assignment02()
         {
             _graphics = new GraphicsDeviceManager(this);
-            //_graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width; // Set the width of the window to the user's screen width
-            //_graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height; // Set the height of the window to the user's screen height
+            _graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width; // Set the width of the window to the user's screen width
+            _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height; // Set the height of the window to the user's screen height
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             _graphics.GraphicsProfile = GraphicsProfile.HiDef;
@@ -348,6 +349,7 @@ namespace Assignment02
             spriteBatch.DrawString(font, "Models: 1 - 6 " , new Vector2(leftMargin, height * line++), Color.White);
             spriteBatch.DrawString(font, "Skybox Textures: 7 - 0 ", new Vector2(leftMargin, height * line++), Color.White);
             spriteBatch.DrawString(font, "Reflectivity: +/- ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Reflectivity: S/s ", new Vector2(leftMargin, height * line++), Color.White);
             spriteBatch.DrawString(font, "eta Ratio: R/r ", new Vector2(leftMargin, height * line++), Color.White);
             spriteBatch.DrawString(font, "eta Ratio: G/g ", new Vector2(leftMargin, height * line++), Color.White);
             spriteBatch.DrawString(font, "eta Ratio: B/b ", new Vector2(leftMargin, height * line++), Color.White);

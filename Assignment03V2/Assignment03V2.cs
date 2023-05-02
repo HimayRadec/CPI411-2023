@@ -2,10 +2,11 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using CPI411.SimpleEngine;
+using System;
 
-namespace Assignment03
+namespace Assignment03V2
 {
-    public class Assignment03 : Game
+    public class Assignment03V2 : Game
     {
 
         // Defaults
@@ -30,14 +31,14 @@ namespace Assignment03
         float angle2 = 0;
         float angleL = 0;
         float angleL2 = 0;
-        float distance = 5;
-        float defaultDistance = 5;
+        float distance = 25;
+        float defaultDistance = 25;
 
         Model model;
         Texture2D texture;
 
-        bool showValues = true;
         bool showControls = true;
+        bool showValues = true;
 
         MouseState preMouse;
         KeyboardState previousKeyboardState;
@@ -47,68 +48,60 @@ namespace Assignment03
         {
             return !previousKeyboardState.IsKeyDown(key) && currentKeyboardState.IsKeyDown(key);
         }
-
-
         // Assignment 03
-        Texture2D art;
-        Texture2D bumpTest;
-        Texture2D crossHatch;
-        Texture2D monkey;
-        Texture2D round;
-        Texture2D saint;
-        Texture2D science;
-        Texture2D square;
-
         float bumpHeight, normalMapRepeatU, normalMapRepeatV;
         int mipMap, normalizeNormalMap, normalizeTangentFrame, selfShadow;
         int shaderMode = 0;
 
         string shaderName;
-
-        public Assignment03()
+        public Assignment03V2()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            // ***** From MonoGame3.6 Need this statement
+            IsMouseVisible = true;
             graphics.GraphicsProfile = GraphicsProfile.HiDef;
-            // **********************************************
+
         }
         protected override void Initialize()
         {
-            base.Initialize();
+            // TODO: Add your initialization logic here
 
-            shaderName = "Bump Map";
+            base.Initialize();
         }
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            font = Content.Load<SpriteFont>("Font");
-            model = Content.Load<Model>("Torus");
-            effect = Content.Load<Effect>("BumpMap");
-            texture = Content.Load<Texture2D>("NormalMaps/art");
 
-            string[] skyboxTextures = { "skybox/nvlobby_new_negx", "skybox/nvlobby_new_posx",
+            // TODO: use this.Content to load your game content here
+            font = Content.Load<SpriteFont>("Font");
+            texture = Content.Load<Texture2D>("NormalMaps/art");
+            model = Content.Load<Model>("Torus");
+            effect = Content.Load<Effect>("Reflection");
+            string[] skyboxTextures = { 
+                "skybox/nvlobby_new_negx", "skybox/nvlobby_new_posx",
                 "skybox/nvlobby_new_negy", "skybox/nvlobby_new_posy",
-                "skybox/nvlobby_new_negz", "skybox/nvlobby_new_posz"};
+                "skybox/nvlobby_new_negz", "skybox/nvlobby_new_posz"
+            };
             skybox = new Skybox(skyboxTextures, Content, graphics.GraphicsDevice);
             ResetValues();
         }
-        protected override void UnloadContent() { }
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-            //previousKeyboardState = currentKeyboardState;
-            //currentKeyboardState = Keyboard.GetState();
+
+            // TODO: Add your update logic here
+            previousKeyboardState = currentKeyboardState;
+            currentKeyboardState = Keyboard.GetState();
 
             if (IsKeyPressed(Keys.H)) showValues = !showValues;
             if (IsKeyPressed(Keys.OemQuestion)) showControls = !showControls;
 
             CameraControls();
             LightControls();
-            ValueControls();
-            ChangeNormalsImage();
+            ImageLoader();
             ChangeShader();
+            ValueControls();
 
             base.Update(gameTime);
         }
@@ -125,17 +118,27 @@ namespace Assignment03
             skybox.Draw(view, projection, cameraPosition);
             graphics.GraphicsDevice.RasterizerState = orginalRasterizerState;
 
-            if (shaderMode == 0) DrawNormal();
-            if (shaderMode == 1) DrawTangentNormal();
-            if (shaderMode == 2) DrawWorldNormal();
-            if (shaderMode == 3) DrawBumpMap();
-            if (shaderMode == 4) DrawBumpReflection();
-            if (shaderMode == 5) DrawBumpRefraction();
+            // Step 1 set the textures and everythings
+
+            // Step 2 draw the model
+            SetReflection();
+            DrawModel();
+
             spriteBatch.Begin();
             if (showControls) DrawControls();
             if (showValues) DrawValues();
             spriteBatch.End();
+
+            base.Draw(gameTime);
         }
+        void SetReflection()
+        {
+            effect = Content.Load<Effect>("Reflection");
+            effect.Parameters["reflectivity"].SetValue(0);
+            effect.Parameters["decalMap"].SetValue(texture);
+        }
+
+        #region - Default Functions -
         private void CameraControls()
         {
             // Reset
@@ -192,17 +195,49 @@ namespace Assignment03
             lightProjection =
                 Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 300f);
         }
-        private void ChangeNormalsImage()
+        private void DrawModel()
         {
-            if (IsKeyPressed(Keys.D1)) { texture = Content.Load<Texture2D>("NormalsMaps/art"); }
-            if (IsKeyPressed(Keys.D2)) { texture = Content.Load<Texture2D>("NormalsMaps/BumpTest"); }
-            if (IsKeyPressed(Keys.D3)) { texture = Content.Load<Texture2D>("NormalsMaps/crossHatch"); }
-            if (IsKeyPressed(Keys.D4)) { texture = Content.Load<Texture2D>("NormalsMaps/monkey"); }
-            if (IsKeyPressed(Keys.D5)) { texture = Content.Load<Texture2D>("NormalsMaps/round"); }
-            if (IsKeyPressed(Keys.D6)) { texture = Content.Load<Texture2D>("NormalsMaps/saint"); }
-            if (IsKeyPressed(Keys.D7)) { texture = Content.Load<Texture2D>("NormalsMaps/science"); }
-            if (IsKeyPressed(Keys.D8)) { texture = Content.Load<Texture2D>("NormalsMaps/square"); }
+            effect.CurrentTechnique = effect.Techniques[0];
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            {
+                foreach (ModelMesh mesh in model.Meshes)
+                {
+                    foreach (ModelMeshPart part in mesh.MeshParts)
+                    {
+                        effect.Parameters["World"].SetValue(mesh.ParentBone.Transform);
+                        effect.Parameters["View"].SetValue(view);
+                        effect.Parameters["Projection"].SetValue(projection);
+                        Matrix worldInverseTransposeMatrix = Matrix.Transpose(Matrix.Invert(mesh.ParentBone.Transform));
+                        effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTransposeMatrix);
+                        effect.Parameters["environmentMap"].SetValue(skybox.skyBoxTexture);
+                        effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+                        /*
+                        if (shaderMode == 0) SetReflection();
+                        if (shaderMode == 1) SetRefraction();
+                        if (shaderMode == 2) SetDespersion();
+                        if (shaderMode == 3) SetFresnal();
+                        */
 
+                        pass.Apply();
+                        GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
+                        GraphicsDevice.Indices = part.IndexBuffer;
+
+                        GraphicsDevice.DrawIndexedPrimitives(
+                            PrimitiveType.TriangleList, part.VertexOffset, 0,
+                            part.NumVertices, part.StartIndex, part.PrimitiveCount);
+                    }
+                }
+            }
+        }
+        private void ImageLoader()
+        {
+            if (IsKeyPressed(Keys.D1)) texture = Content.Load<Texture2D>("NormalMaps/art");
+            if (IsKeyPressed(Keys.D2)) texture = Content.Load<Texture2D>("NormalMaps/BumpTest");
+            if (IsKeyPressed(Keys.D3)) texture = Content.Load<Texture2D>("NormalMaps/crossHatch");
+            if (IsKeyPressed(Keys.D4)) texture = Content.Load<Texture2D>("NormalMaps/monkey");
+            if (IsKeyPressed(Keys.D5)) texture = Content.Load<Texture2D>("NormalMaps/round");
+            if (IsKeyPressed(Keys.D6)) texture = Content.Load<Texture2D>("NormalMaps/saint");
+            if (IsKeyPressed(Keys.D7)) texture = Content.Load<Texture2D>("NormalMaps/science");
         }
         private void ChangeShader()
         {
@@ -237,44 +272,10 @@ namespace Assignment03
             if (IsKeyPressed(Keys.F)) ResetValues();
 
         }
-        void DisplayValues()
-        {
-            int height = 20;
-            int line = 1;
-            float leftMargin = 20f;
+        #endregion
 
-            spriteBatch.DrawString(font, "Active Shader " + effect, new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "Reset Values: F ", new Vector2(leftMargin, height * line++), Color.White);
-
-        }
-        void DrawControls()
-        {
-            int height = 20;
-            int line = 1;
-            float leftMargin = graphics.PreferredBackBufferWidth * 0.75f;
-
-            spriteBatch.DrawString(font, "Shaders: F7 - F10 ", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "Models: 1 - 6 ", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "Skybox Textures: 7 - 0 ", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "Reflectivity: +/- ", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "eta Ratio: R/r ", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "eta Ratio: G/g ", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "eta Ratio: B/b ", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "Fresnal Power: Q/q ", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "Fresnal Scale: W/w ", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "Fresnal Bias: E/e ", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "Light Controls: Arrows", new Vector2(leftMargin, height * line++), Color.White);
-            spriteBatch.DrawString(font, "Reset Camera/Light: Enter ", new Vector2(leftMargin, height * line++), Color.White);
-        }
-        void DrawValues()
-        {
-            angle = angle2  = angleL = angleL2 = 0;
-            distance = 30;
-            cameraPosition = new Vector3(0, 0, 0);
-            normalizeTangentFrame = normalizeNormalMap = mipMap = 0;
-            normalMapRepeatU = normalMapRepeatV = bumpHeight = 1.0f;
-        } 
-        private void DrawNormal()
+        #region - Shaders -
+        private void _drawNorm()
         {
             shaderName = "Image Normal";
             effect = Content.Load<Effect>("ImageNormal");
@@ -288,9 +289,9 @@ namespace Assignment03
             spriteBatch.Begin(0, null, null, null, null, effect);
             spriteBatch.Draw(texture, new Vector2(0, 0), null, Color.White, 0, Vector2.Zero, 1f, SpriteEffects.None, 0f); // Could be source of error ?????
             spriteBatch.End();
-            
+
         }
-        private void DrawTangentNormal()
+        private void DrawTangentNormal() /// ?????????????????????
         {
             shaderName = "Draw Tangent Normal";
             effect = Content.Load<Effect>("ImageNormal");
@@ -306,7 +307,7 @@ namespace Assignment03
             spriteBatch.End();
 
         }
-        private void DrawWorldNormal()
+        private void DrawWorldNormal() /// ????????????????
         {
             shaderName = "Draw World Normal";
             effect = Content.Load<Effect>("ImageNormal");
@@ -322,7 +323,7 @@ namespace Assignment03
             spriteBatch.End();
 
         }
-        private void DrawBumpMap()
+        private void _setBumpMap()
         {
             shaderName = "Draw Bump Map";
             effect = Content.Load<Effect>("BumpMap");
@@ -449,6 +450,28 @@ namespace Assignment03
                 }
             }
         }
+
+        #endregion
+
+        #region - Values -
+        void DrawValues()
+        {
+            int height = 20;
+            int line = 1;
+            float leftMargin = 20f;
+
+            spriteBatch.DrawString(font, "Texture = " + texture, new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Reset Values: R ", new Vector2(leftMargin, height * line++), Color.White);
+
+        } // COMPLETE
+        void DrawControls()
+        {
+            int height = 20;
+            int line = 1;
+            float leftMargin = graphics.PreferredBackBufferWidth * 0.75f;
+            spriteBatch.DrawString(font, "Change Textures: 1-7 ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Reset Camera/Light: Enter ", new Vector2(leftMargin, height * line++), Color.White);
+        } // COMPLETE
         void ResetValues()
         {
             angle = angle2 = angleL = angleL2 = 0;
@@ -457,5 +480,7 @@ namespace Assignment03
             normalizeTangentFrame = normalizeNormalMap = mipMap = 0;
             normalMapRepeatU = normalMapRepeatV = bumpHeight = 1.0f;
         }  // COMPLETE
+
+        #endregion
     }
 }
