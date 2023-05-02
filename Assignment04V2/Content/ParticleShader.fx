@@ -1,10 +1,11 @@
 ﻿float4x4 World;
 float4x4 View;
 float4x4 Projection;
-float4x4 InverseCamera; //Inverse Camera Matrix
+float4x4 InverseCamera;
 texture2D Texture;
 
-sampler ParticleSampler = sampler_state {
+sampler ParticleSampler : register(s0) = sampler_state
+{
     Texture = <Texture>;
     MipFilter = LINEAR;
     MinFilter = LINEAR;
@@ -16,9 +17,8 @@ struct VertexShaderInput
     float4 Position : POSITION;
     float2 TexCoord : TEXCOORD0;
     float4 ParticlePosition : POSITION1;
-    float4 ParticleParamater : POSITION2; // x: Scale x/y: Color
+    float4 ParticleParameter : POSITION2;
 };
-
 struct VertexShaderOutput
 {
     float4 Position : POSITION;
@@ -30,27 +30,30 @@ VertexShaderOutput ParticleVertexShader(VertexShaderInput input)
 {
     VertexShaderOutput output;
     float4 worldPosition = mul(input.Position, InverseCamera);
-    worldPosition.xyz = worldPosition.xyz * sqrt(input.ParticleParamater.x);
+    worldPosition.xyz = worldPosition.xyz * sqrt(input.ParticleParameter.x / input.ParticleParameter.y);
     worldPosition += input.ParticlePosition;
     
     output.Position = mul(mul(mul(worldPosition, World), View), Projection);
     output.TexCoord = input.TexCoord;
-    output.Color = 1 - input.ParticleParamater.x / input.ParticleParamater.y;
+    output.Color = 1 - input.ParticleParameter.x / input.ParticleParameter.y;
     
     return output;
 }
 
-float4 ParticlePixelShader(VertexShaderOutput input) : COLOR
+float4 ParticlePixelShader(VertexShaderOutput input) : COLOR 
 {
     float4 color = tex2D(ParticleSampler, input.TexCoord);
     color *= input.Color;
     return color;
 }
 
-technique ParticleShader {
-    pass Pass0
+technique Technique1
+{
+    pass particle
     {
         VertexShader = compile vs_4_0 ParticleVertexShader();
         PixelShader = compile ps_4_0 ParticlePixelShader();
+
     }
 }
+        

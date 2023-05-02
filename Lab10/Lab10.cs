@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 
 using System.Reflection;
 using CPI411.SimpleEngine;
+using System;
 
 namespace Lab10
 {
@@ -70,6 +71,7 @@ namespace Lab10
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+
 
             #region - TEMPLATE -
             // ************ TEMPLATE ************ //
