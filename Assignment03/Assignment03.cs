@@ -125,9 +125,8 @@ namespace Assignment03
             skybox.Draw(view, projection, cameraPosition);
             graphics.GraphicsDevice.RasterizerState = orginalRasterizerState;
 
-            if (shaderMode == 0) DrawNormal();
-            if (shaderMode == 1) DrawTangentNormal();
-            if (shaderMode == 2) DrawWorldNormal();
+            if (shaderMode == 1) DrawNormal();
+            if (shaderMode == 2) DrawRGBNormal();
             if (shaderMode == 3) DrawBumpMap();
             if (shaderMode == 4) DrawBumpReflection();
             if (shaderMode == 5) DrawBumpRefraction();
@@ -206,12 +205,11 @@ namespace Assignment03
         }
         private void ChangeShader()
         {
-            if (IsKeyPressed(Keys.F1)) { shaderMode = 0; }
-            if (IsKeyPressed(Keys.F2)) { shaderMode = 1; }
-            if (IsKeyPressed(Keys.F3)) { shaderMode = 2; }
-            if (IsKeyPressed(Keys.F4)) { shaderMode = 3; }
-            if (IsKeyPressed(Keys.F5)) { shaderMode = 4; }
-            if (IsKeyPressed(Keys.F6)) { shaderMode = 5; }
+            if (IsKeyPressed(Keys.F1)) { shaderMode = 1; }
+            if (IsKeyPressed(Keys.F2)) { shaderMode = 2; }
+            if (IsKeyPressed(Keys.F3)) { shaderMode = 3; }
+            if (IsKeyPressed(Keys.F4)) { shaderMode = 4; }
+            if (IsKeyPressed(Keys.F5)) { shaderMode = 5; }
 
         }
         private void ValueControls()
@@ -243,7 +241,7 @@ namespace Assignment03
             int line = 1;
             float leftMargin = 20f;
 
-            spriteBatch.DrawString(font, "Active Shader " + effect, new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Active Shader " + shaderName, new Vector2(leftMargin, height * line++), Color.White);
             spriteBatch.DrawString(font, "Reset Values: F ", new Vector2(leftMargin, height * line++), Color.White);
 
         }
@@ -290,7 +288,7 @@ namespace Assignment03
             spriteBatch.End();
             
         }
-        private void DrawTangentNormal()
+        private void DrawRGBNormal()
         {
             shaderName = "Draw Tangent Normal";
             effect = Content.Load<Effect>("ImageNormal");

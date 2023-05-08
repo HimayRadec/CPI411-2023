@@ -51,15 +51,15 @@ namespace FinalProject
         private float defaultDetailSideToSideAmplitude = 0.005f;
         private float mainBendScale = 0.01f;
         private float defaultMainBendScale = 0.01f;
-        private bool detailBranchOn = false;
-        private bool detailSideToSideOn = false;
-        private bool mainBendOn = false;
-        private bool pauseWind = true;
+        private bool detailBranchOn = true;
+        private bool detailSideToSideOn = true;
+        private bool mainBendOn = true;
+        private bool pauseWind = false;
 
-        bool displayRed, displayGreen, displayBlue, displayAlpha = false;
+        bool displayRed, displayGreen, displayBlue, displayAlpha = true;
         bool displayInformation = true;
 
-        int lineHeight = 45;
+        int lineHeight = 25;
         float windSpeedMultiplier = 1f;
 
 
@@ -86,8 +86,9 @@ namespace FinalProject
         {
 
             base.Initialize();
-        }
+            displayRed = displayGreen = displayBlue = displayAlpha = true;
 
+        }
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -95,7 +96,6 @@ namespace FinalProject
             effect = Content.Load<Effect>("WindAnimation");
             font = Content.Load<SpriteFont>("UI");
         }
-
         protected override void Update(GameTime gameTime)
         {
             previousKeyboardState = currentKeyboardState;
@@ -126,7 +126,6 @@ namespace FinalProject
 
             base.Update(gameTime);
         }
-
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
@@ -148,7 +147,6 @@ namespace FinalProject
 
             base.Draw(gameTime);
         }
-
         private void ControlParameters()
         {
             if (IsKeyPressed(Keys.Q))

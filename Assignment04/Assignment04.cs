@@ -38,7 +38,7 @@ namespace Assignment04
         Model model;
         Texture2D texture;
 
-        bool showControls = true; 
+        bool showControls = true;
         bool showValues = true;
 
         MouseState preMouse;
@@ -47,9 +47,9 @@ namespace Assignment04
 
         // Assignment 04
         ParticleManager particleManager;
-        Vector3 particlePosition = new Vector3(0,0,0);
-        Vector3 particleVelocity = new Vector3(0,0,0);
-        Vector3 particleAcceleration = new Vector3(0,-3f,0);
+        Vector3 particlePosition = new Vector3(0, 0, 0);
+        Vector3 particleVelocity = new Vector3(0, 0, 0);
+        Vector3 particleAcceleration = new Vector3(0, -3f, 0);
         float particleWind = 0f;
         float particleSpeed = 1f;
 
@@ -58,10 +58,10 @@ namespace Assignment04
         int emissionShape = 0;
         enum EmissionShape
         {
-            Square,
-            Curve, 
-            Ring
-        };
+            Square, // 0
+            Curve, // 1
+            Ring // 2
+        }; 
 
         int emissionType = 0;
         enum EmissionType
@@ -94,8 +94,8 @@ namespace Assignment04
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             graphics.GraphicsProfile = GraphicsProfile.HiDef;
-            graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width; // Set the width of the window to the user's screen width
-            graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height; // Set the height of the window to the user's screen height
+            //graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width; // Set the width of the window to the user's screen width
+            //graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height; // Set the height of the window to the user's screen height
 
         }
         protected override void Initialize()

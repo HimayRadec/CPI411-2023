@@ -12,7 +12,7 @@ int NormalizeTangentFrame;
 int NormalizeNormalMap;
 int MipMap;
 
-texture normapMap;
+texture normalMap;
 
 sampler NormalMapSamplerLinear = sampler_state
 {
@@ -57,10 +57,10 @@ struct VertexShaderInput
 struct VertexShaderOutput
 {
     float4 Position : POSITION0;
-    float3 Normal : NORMAL0;
-    float3 Tangent : TANGENT0;
-    float3 Binormal : BINORMAL0;
-    float2 TexCoord : TEXCOORD0;
+    float3 Normal : TEXCOORD0;
+    float3 Tangent : TEXCOORD1;
+    float3 Binormal : TEXCOORD2;
+    float2 TexCoord : TEXCOORD3;
 };
 
 VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
@@ -87,7 +87,7 @@ float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
     float3 normalTex = tex2D(NormalMapSamplerLinear, texCoord).rgb;
     if (MipMap == 0) normalTex = tex2D(NormalMapSamplerNone, texCoord).rgb;
     
-    normalTex = Expand(normalTex);
+    normalTex = BumpHeight * Expand(normalTex);
     normalTex.x *= (1 + 0.2 * (BumpHeight - 5));
     normalTex.y *= (1 + 0.2 * (BumpHeight - 5));
     normalTex.z *= (1 + 0.2 * (5 - BumpHeight));

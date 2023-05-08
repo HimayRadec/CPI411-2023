@@ -22,7 +22,9 @@ int NormalizeTangentFrame;
 int NormalizeNormalMap;
 int MipMap;
 
-texture normapMap;
+texture normalMap;
+texture environmentMap;
+
 samplerCUBE SkyBoxSampler = sampler_state
 {
     texture = <environmentMap>;

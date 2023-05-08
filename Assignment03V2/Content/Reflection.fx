@@ -10,8 +10,6 @@ texture environmentMap;
 
 float reflectivity;
 
-float refractivity;
-float3 etaRatio;
 
 sampler tsampler1 = sampler_state
 {

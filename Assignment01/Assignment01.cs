@@ -1,50 +1,69 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Security.Cryptography;
 
 namespace Assignment01
 {
     public class Assignment01 : Game
     {
-        private GraphicsDeviceManager _graphics;
-        private SpriteBatch _spriteBatch;
 
-        private SpriteFont font;
-        private bool displayUI = true;
-        private bool displayValues = true;
+        #region - Default Variables - 
+
+        private GraphicsDeviceManager _graphics;
+        private SpriteBatch spriteBatch;
+        SpriteFont font;
+        Effect effect;
+
+        Matrix world = Matrix.Identity;
+        Matrix view = Matrix.CreateLookAt(new Vector3(20, 0, 0), new Vector3(0, 0, 0), Vector3.UnitY);
+        Matrix projection = Matrix.CreatePerspectiveFieldOfView(
+            MathHelper.ToRadians(45),
+            800f / 600f,
+            0.01f,
+            10000f);
+        Vector3 cameraPosition, cameraTarget, lightPosition;
+        Matrix lightView, lightProjection;
+
+        float angle = 0;
+        float angle2 = 0;
+        float angleL = 0;
+        float angleL2 = 0;
+        float distance = 10;
+        float defaultDistance = 10;
+
+        bool showMenu = true;
+        bool showValues = true;
+
+        Model model;
+        Texture2D texture;
+
+        MouseState preMouse;
+        KeyboardState previousKeyboardState;
+        KeyboardState currentKeyboardState;
+        private bool IsKeyPressed(Keys key)
+        {
+            return !previousKeyboardState.IsKeyDown(key) && currentKeyboardState.IsKeyDown(key);
+        }
+
+
+
+        #endregion
+
+
 
         #region - Variables -
-        Effect effect;
-        Model model;
-        int currentShader = 0;
-        string currentShaderType = "Gourand Vertex";
+
+        int currentShader;
+        string currentShaderType;
 
         Vector4 specularColor = new Vector4(1, 1, 1, 1);
         Vector4 ambient = new Vector4(0, 0, 0, 0);
         Vector4 diffuseColor = new Vector4(1, 1, 1, 1);
-        Vector3 lightPosition = new Vector3(1, 1, 1);
         float ambientIntensity = 0;
         float diffuseIntensity = 1f;
         float specularIntensity = 1f;
-        float shininess = 20f;
-
-        MouseState preMouseState;
-        float angleY;
-        float xSensitivity = 0.01f;
-        float ySensitivity = 0.01f;
-        float angleX;
-
-        float xPosition = 0;
-        float yPosition = 0;
-        float distance = 2f;
-
-        float lightAngleX = 0f;
-        float lightAngleY = 0f;
-
-        Matrix view;
-        Matrix world;
-        Matrix projection;
-        Vector3 cameraPosition;
+        float shininess = 10f;
 
         #endregion 
 
@@ -65,7 +84,7 @@ namespace Assignment01
 
         protected override void LoadContent()
         {
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
             model = Content.Load<Model>("Box");
@@ -78,69 +97,17 @@ namespace Assignment01
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            #region - Basic User Interfaces -
+            previousKeyboardState = currentKeyboardState;
+            currentKeyboardState = Keyboard.GetState();
 
-            #region - Camera Rotate -
-            MouseState currentMouseState = Mouse.GetState();
-            KeyboardState currentKeyboardState = Keyboard.GetState();
-            if (currentMouseState.LeftButton == ButtonState.Pressed && preMouseState.LeftButton == ButtonState.Pressed)
-            {
-                angleX += (preMouseState.X - currentMouseState.X) * xSensitivity;
-                angleY += (preMouseState.Y - currentMouseState.Y) * ySensitivity;
-            }
-            #endregion
+            if (IsKeyPressed(Keys.H)) showValues = !showValues;
+            if (IsKeyPressed(Keys.OemQuestion)) showMenu = !showMenu;
+            if (IsKeyPressed(Keys.F)) ResetValues();
 
-            #region - Camera Distance -
-            if (currentMouseState.RightButton == ButtonState.Pressed && preMouseState.RightButton == ButtonState.Pressed)
-            {
-                distance += (preMouseState.Y - currentMouseState.Y) / 2f;
-            }
-            #endregion
+            LightControls();
+            CameraControls();
 
-            #region - Camera Translate -
-            if (currentMouseState.MiddleButton == ButtonState.Pressed && preMouseState.MiddleButton == ButtonState.Pressed)
-            {
-                xPosition += (preMouseState.X - currentMouseState.X) / 2f;
-                yPosition += (preMouseState.Y - currentMouseState.Y) / 2f;
-            }
-            #endregion
-
-            #region - Light Rotate -
-            if (Keyboard.GetState().IsKeyDown(Keys.Left) && currentKeyboardState.GetPressedKeys().Length == 1)
-            {
-                lightAngleX -= .01f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.Right))
-            {
-                lightAngleX += .01f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.Down))
-            {
-                lightAngleY += .01f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.Up))
-            {
-                lightAngleY -= .01f;
-            }
-            #endregion
-
-            #region - Reset Settings -
-            if (Keyboard.GetState().IsKeyDown(Keys.S))
-            {
-                xPosition = 0;
-                yPosition = 0;
-                distance = 20f;
-                angleX = 0;
-                angleY = 0;
-                lightAngleX= 0;
-                lightAngleY= 0;
-                diffuseIntensity = 1f;
-                diffuseColor = new Vector4(1, 1, 1, 1);
-            }
-            #endregion
-
-            #endregion
-
+            // Keep
             #region - Geometry Loader -
 
             // The models provided under the "assignment one" are smaller than
@@ -208,86 +175,30 @@ namespace Assignment01
             }
             #endregion
 
-            #region - Light Properties -
-            if (Keyboard.GetState().IsKeyDown(Keys.RightShift)) 
-            {
-                diffuseIntensity += .01f;
-                diffuseColor.W += .01f;
-                diffuseColor.Y += .01f;
-                diffuseColor.Z += .01f;
+            if (Keyboard.GetState().IsKeyDown(Keys.L) && !Keyboard.GetState().IsKeyDown(Keys.LeftShift)) diffuseIntensity += .01f;
+            if (Keyboard.GetState().IsKeyDown(Keys.L) && Keyboard.GetState().IsKeyDown(Keys.LeftShift)) diffuseIntensity -= .01f;
 
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.LeftShift))
-            {
-                diffuseIntensity -= .01f;
-                diffuseColor.W -= .01f;
-                diffuseColor.Y -= .01f;
-                diffuseColor.Z -= .01f;
+            if (Keyboard.GetState().IsKeyDown(Keys.R) && !Keyboard.GetState().IsKeyDown(Keys.LeftShift)) diffuseColor.X += .01f;
+            if (Keyboard.GetState().IsKeyDown(Keys.R) && Keyboard.GetState().IsKeyDown(Keys.LeftShift)) diffuseColor.X -= .01f;
 
-            }
-            #endregion
+            if (Keyboard.GetState().IsKeyDown(Keys.G) && !Keyboard.GetState().IsKeyDown(Keys.LeftShift)) diffuseColor.Y += .01f;
+            if (Keyboard.GetState().IsKeyDown(Keys.G) && Keyboard.GetState().IsKeyDown(Keys.LeftShift)) diffuseColor.Y -= .01f;
 
-            #region - Specular Intensity - 
-            if (Keyboard.GetState().IsKeyDown(Keys.OemPlus) && currentKeyboardState.GetPressedKeys().Length == 1) 
-            {
-                // Increases the intensity
-                specularIntensity += .1f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.OemMinus) && currentKeyboardState.GetPressedKeys().Length == 1)
-            {
-                // Decreases the intensity
-                specularIntensity -= .1f;
-            }
-            #endregion
+            if (Keyboard.GetState().IsKeyDown(Keys.B) && !Keyboard.GetState().IsKeyDown(Keys.LeftShift)) diffuseColor.Z += .01f;
+            if (Keyboard.GetState().IsKeyDown(Keys.B) && Keyboard.GetState().IsKeyDown(Keys.LeftShift)) diffuseColor.Z -= .01f;
 
-            #region - Shininess - 
-            if (Keyboard.GetState().IsKeyDown(Keys.Left) && Keyboard.GetState().IsKeyDown(Keys.OemPlus))
-            {
-                // Increase Shininess
-                shininess += .1f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.Left) && Keyboard.GetState().IsKeyDown(Keys.OemMinus))
-            {
-                // Decrease Shininess
-                shininess -= .1f;
-            }
-            #endregion
+            if (Keyboard.GetState().IsKeyDown(Keys.S) && !Keyboard.GetState().IsKeyDown(Keys.LeftShift)) shininess += .1f;
+            if (Keyboard.GetState().IsKeyDown(Keys.S) && Keyboard.GetState().IsKeyDown(Keys.LeftShift)) shininess -= .1f;
 
-            #region - Text Information -
-
-            // BUG: make it so that these activate when the key is released because keydown fast toggles it
-            if (Keyboard.GetState().IsKeyDown(Keys.OemQuestion))
-            {
-                //  Show/hide the help screen showing the information of key/mouse controls
-                displayUI = !displayUI;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.H))
-            {
-                // Show/hide all information used in the shader such as camera angle, light angle, shadertype, intensity, specular, rgb values of light, etc.
-                displayValues = !displayValues;
-            }
-            #endregion
+            if (Keyboard.GetState().IsKeyDown(Keys.OemPlus)) specularIntensity += .1f;
+            if (Keyboard.GetState().IsKeyDown(Keys.OemMinus)) specularIntensity -= .1f;
+             
 
             #endregion
 
-            #region - Transformations - 
-            lightPosition = Vector3.Transform(
-                new Vector3(1, 1, 1),
-                Matrix.CreateRotationX(lightAngleY) * Matrix.CreateRotationY(lightAngleX));
-
-            cameraPosition = Vector3.Transform(
-                new Vector3(xPosition, yPosition, distance), 
-                Matrix.CreateRotationX(angleY) * Matrix.CreateRotationY(angleX));
-            view = Matrix.CreateLookAt(
-                cameraPosition, 
-                new Vector3(xPosition,yPosition,0), 
-                Vector3.Transform(Vector3.Up, Matrix.CreateRotationX(angleY)*Matrix.CreateRotationY(angleX)));
-            projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(90), 1.33f, 0.1f, 100);
-            #endregion
 
             
 
-            preMouseState = currentMouseState;
 
             base.Update(gameTime);
         }
@@ -343,42 +254,130 @@ namespace Assignment01
                 }
             }
 
-            if (displayUI)
-            {
-                _spriteBatch.Begin();
-                _spriteBatch.DrawString(font, "CONTROLS", new Vector2(25, 25), Color.Black);
-                _spriteBatch.DrawString(font, "Toggle Controls: ?", new Vector2(25, 45), Color.Black);
-                _spriteBatch.DrawString(font, "Rotate the camera : Mouse Left Drag", new Vector2(25, 65), Color.Black);
-                _spriteBatch.DrawString(font, "Change the distance of camera to the center: Mouse Right Drag", new Vector2(25, 85), Color.Black);
-                _spriteBatch.DrawString(font, "Translate the camera: Mouse Middle Drag", new Vector2(25, 105), Color.Black);
-                _spriteBatch.DrawString(font, "Rotate the light: Arrow keys", new Vector2(25, 125), Color.Black);
-                _spriteBatch.DrawString(font, "Reset camera and light: S ", new Vector2(25, 145), Color.Black);
-                _spriteBatch.DrawString(font, "Change Shader: F1-F6", new Vector2(25, 165), Color.Black);
-                _spriteBatch.DrawString(font, "Change Object: 1-5", new Vector2(25, 185), Color.Black);
-                _spriteBatch.DrawString(font, "RGB properties: Shift", new Vector2(25, 205), Color.Black);
-                _spriteBatch.DrawString(font, "Specular Intensity: +/-", new Vector2(25, 225), Color.Black);
-                _spriteBatch.DrawString(font, "Shininess: Left Arrow & +/-", new Vector2(25, 245), Color.Black);
-                _spriteBatch.DrawString(font, "Information: H", new Vector2(25, 265), Color.Black);
-                _spriteBatch.End();
-            }
-
-            if (displayValues)
-            {
-                _spriteBatch.Begin();
-                _spriteBatch.DrawString(font, "VALUES", new Vector2(525, 25), Color.Black);
-                _spriteBatch.DrawString(font, "Camera Angle: (" + (int)(angleX * 100) + "," + (int)(angleY * 100) +")", new Vector2(525, 45), Color.Black);
-                _spriteBatch.DrawString(font, "Light Angle: (" + (int)(lightAngleX * 100) + "," + (int)(lightAngleY * 100) + ")", new Vector2(525, 65), Color.Black);
-                _spriteBatch.DrawString(font, "Shader Type: " + currentShaderType, new Vector2(525, 85), Color.Black);
-                _spriteBatch.DrawString(font, "Light Intensity: " + diffuseIntensity.ToString("0.00"), new Vector2(525, 105), Color.Black);
-                _spriteBatch.DrawString(font, "R: " + diffuseColor.W.ToString("0.00"), new Vector2(525, 125), Color.Black);
-                _spriteBatch.DrawString(font, "G: " + diffuseColor.Y.ToString("0.00"), new Vector2(525, 145), Color.Black);
-                _spriteBatch.DrawString(font, "B: " + diffuseColor.Z.ToString("0.00"), new Vector2(525, 165), Color.Black);
-                _spriteBatch.DrawString(font, "Specular Intensity: " + specularIntensity.ToString("0.00"), new Vector2(525, 185), Color.Black);
-                _spriteBatch.DrawString(font, "Shininess: " + shininess.ToString("0.00"), new Vector2(525, 205), Color.Black);
-                _spriteBatch.End();
-            }
+            spriteBatch.Begin();
+            if (showMenu) DisplayHelp();
+            if (showValues) DisplayValues();
+            spriteBatch.End();  
 
             base.Draw(gameTime);
         }
+
+        private void CameraControls()
+        {
+            // Reset
+            if (IsKeyPressed(Keys.Enter)) { angle = angle2 = angleL = angleL2 = 0; distance = defaultDistance; cameraTarget = Vector3.Zero; }
+
+            // Camera Buttons
+            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+            {
+                angle -= (Mouse.GetState().X - preMouse.X) / 100f;
+                angle2 += (Mouse.GetState().Y - preMouse.Y) / 100f;
+            }
+            if (Mouse.GetState().RightButton == ButtonState.Pressed)
+            {
+                distance += (Mouse.GetState().X - preMouse.X) / 100f;
+            }
+            if (Mouse.GetState().MiddleButton == ButtonState.Pressed)
+            {
+                Vector3 ViewRight = Vector3.Transform(Vector3.UnitX,
+                    Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle));
+                Vector3 ViewUp = Vector3.Transform(Vector3.UnitY,
+                    Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle));
+                cameraTarget -= ViewRight * (Mouse.GetState().X - preMouse.X) / 10f;
+                cameraTarget += ViewUp * (Mouse.GetState().Y - preMouse.Y) / 10f;
+            }
+            preMouse = Mouse.GetState();
+
+            // Update Camera
+            cameraPosition = Vector3.Transform(new Vector3(0, 0, distance),
+                Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle) * Matrix.CreateTranslation(cameraTarget));
+            view = Matrix.CreateLookAt(
+                cameraPosition,
+                cameraTarget,
+                Vector3.Transform(Vector3.UnitY, Matrix.CreateRotationX(angle2) * Matrix.CreateRotationY(angle)));
+        }
+        private void LightControls()
+        {
+            // Lights Buttons
+            if (Keyboard.GetState().IsKeyDown(Keys.Left)) angleL += 0.02f;
+            if (Keyboard.GetState().IsKeyDown(Keys.Right)) angleL -= 0.02f;
+            if (Keyboard.GetState().IsKeyDown(Keys.Up)) angleL2 += 0.02f;
+            if (Keyboard.GetState().IsKeyDown(Keys.Down)) angleL2 -= 0.02f;
+
+            // Update Light
+            lightPosition = Vector3.Transform(
+                new Vector3(0, 0, 10),
+                Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL));
+
+            lightView = Matrix.CreateLookAt(
+                lightPosition,
+                Vector3.Zero,
+                Vector3.Transform(
+                    Vector3.UnitY,
+                    Matrix.CreateRotationX(angleL2) * Matrix.CreateRotationY(angleL)));
+            lightProjection =
+                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, 1f, 1f, 300f);
+        }
+        void DisplayValues()
+        {
+            int height = 20;
+            int line = 1;
+            float leftMargin = 20f;
+
+            spriteBatch.DrawString(font, "Shader Type: " + currentShaderType, new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Camera Angle: (" + (int)(angle * 100) + "," + (int)(angle2 * 100) + ")", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Light Angle: (" + (int)(angleL * 100) + "," + (int)(angleL2 * 100) + ")", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Light Intensity: " + diffuseIntensity.ToString("0.00"), new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "R: " + diffuseColor.X.ToString("0.00"), new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "G: " + diffuseColor.Y.ToString("0.00"), new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "B: " + diffuseColor.Z.ToString("0.00"), new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Specular Intensity: " + specularIntensity.ToString("0.00"), new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Shininess: " + shininess.ToString("0.00"), new Vector2(leftMargin, height * line++), Color.White);
+
+
+            //spriteBatch.DrawString(font, "VALUES", new Vector2(525, 25), Color.Black);
+            //spriteBatch.DrawString(font, "Camera Angle: (" + (int)(angle * 100) + "," + (int)(angle2 * 100) + ")", new Vector2(525, 45), Color.Black);
+            //spriteBatch.DrawString(font, "Light Angle: (" + (int)(angleL * 100) + "," + (int)(angleL2 * 100) + ")", new Vector2(525, 65), Color.Black);
+            //spriteBatch.DrawString(font, "Shader Type: " + currentShaderType, new Vector2(525, 85), Color.Black);
+            //spriteBatch.DrawString(font, "Light Intensity: " + diffuseIntensity.ToString("0.00"), new Vector2(525, 105), Color.Black);
+            //spriteBatch.DrawString(font, "R: " + diffuseColor.X.ToString("0.00"), new Vector2(525, 125), Color.Black);
+            //spriteBatch.DrawString(font, "G: " + diffuseColor.Y.ToString("0.00"), new Vector2(525, 145), Color.Black);
+            //spriteBatch.DrawString(font, "B: " + diffuseColor.Z.ToString("0.00"), new Vector2(525, 165), Color.Black);
+            //spriteBatch.DrawString(font, "Specular Intensity: " + specularIntensity.ToString("0.00"), new Vector2(525, 185), Color.Black);
+            //spriteBatch.DrawString(font, "Shininess: " + shininess.ToString("0.00"), new Vector2(525, 205), Color.Black);
+
+        }
+        void DisplayHelp()
+        {
+            int height = 20;
+            int line = 1;
+            float leftMargin = _graphics.PreferredBackBufferWidth * 0.65f;
+
+            spriteBatch.DrawString(font, "CONTROLS", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Toggle Controls: ?", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Rotate the camera : Mouse Left Drag", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Change the distance of camera to the center: Mouse Right Drag", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Translate the camera: Mouse Middle Drag", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Rotate the light: Arrow keys", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Change Shader: F1-F6", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Change Object: 1-5", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "RGB properties: Shift/R/G/B", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Specular Intensity: +/-", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Reset camera and light: Enter ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Reset Values: R", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Information: ?", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Values: H", new Vector2(leftMargin, height * line++), Color.White);
+        }
+        void ResetValues()
+        {
+            specularColor = new Vector4(1, 1, 1, 1);
+            ambient = new Vector4(0, 0, 0, 0);
+            diffuseColor = new Vector4(1, 1, 1, 1);
+            ambientIntensity = 0;
+            diffuseIntensity = 1f;
+            specularIntensity = 1f;
+            shininess = 10f;
+        }
     }
+        
 }

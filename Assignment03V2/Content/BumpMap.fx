@@ -22,7 +22,7 @@ int NormalizeTangentFrame;
 int NormalizeNormalMap;
 int MipMap;
 
-texture normapMap;
+texture normalMap;
 
 sampler NormalMapSamplerLinear = sampler_state
 {

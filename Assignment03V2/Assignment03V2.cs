@@ -9,7 +9,7 @@ namespace Assignment03V2
     public class Assignment03V2 : Game
     {
 
-        // Defaults
+        #region - Defaults - 
 
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
@@ -48,10 +48,13 @@ namespace Assignment03V2
         {
             return !previousKeyboardState.IsKeyDown(key) && currentKeyboardState.IsKeyDown(key);
         }
+
+        #endregion
+
         // Assignment 03
         float bumpHeight, normalMapRepeatU, normalMapRepeatV;
         int mipMap, normalizeNormalMap, normalizeTangentFrame, selfShadow;
-        int shaderMode = 0;
+        int shaderMode = 1;
 
         string shaderName;
         public Assignment03V2()
@@ -65,12 +68,14 @@ namespace Assignment03V2
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            
 
             base.Initialize();
         }
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
+            shaderMode = 6;
 
             // TODO: use this.Content to load your game content here
             font = Content.Load<SpriteFont>("Font");
@@ -83,7 +88,7 @@ namespace Assignment03V2
                 "skybox/nvlobby_new_negz", "skybox/nvlobby_new_posz"
             };
             skybox = new Skybox(skyboxTextures, Content, graphics.GraphicsDevice);
-            ResetValues();
+            ResetValues(); 
         }
         protected override void Update(GameTime gameTime)
         {
@@ -92,14 +97,11 @@ namespace Assignment03V2
 
             // TODO: Add your update logic here
             previousKeyboardState = currentKeyboardState;
-            currentKeyboardState = Keyboard.GetState();
+            currentKeyboardState = Keyboard.GetState(); 
 
-            if (IsKeyPressed(Keys.H)) showValues = !showValues;
-            if (IsKeyPressed(Keys.OemQuestion)) showControls = !showControls;
-
-            CameraControls();
+            CameraControls(); 
             LightControls();
-            ImageLoader();
+            TextureLoader();
             ChangeShader();
             ValueControls();
 
@@ -121,8 +123,15 @@ namespace Assignment03V2
             // Step 1 set the textures and everythings
 
             // Step 2 draw the model
-            SetReflection();
-            DrawModel();
+            if (shaderMode == 7)
+            {
+                DisplayImageNormalMap();
+            } 
+            else
+            {
+                DrawModel();
+
+            }
 
             spriteBatch.Begin();
             if (showControls) DrawControls();
@@ -133,8 +142,9 @@ namespace Assignment03V2
         }
         void SetReflection()
         {
-            effect = Content.Load<Effect>("Reflection");
-            effect.Parameters["reflectivity"].SetValue(0);
+            effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+            effect.Parameters["environmentMap"].SetValue(skybox.skyBoxTexture);
+            effect.Parameters["reflectivity"].SetValue(0.99f);
             effect.Parameters["decalMap"].SetValue(texture);
         }
 
@@ -209,14 +219,12 @@ namespace Assignment03V2
                         effect.Parameters["Projection"].SetValue(projection);
                         Matrix worldInverseTransposeMatrix = Matrix.Transpose(Matrix.Invert(mesh.ParentBone.Transform));
                         effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTransposeMatrix);
-                        effect.Parameters["environmentMap"].SetValue(skybox.skyBoxTexture);
-                        effect.Parameters["CameraPosition"].SetValue(cameraPosition);
-                        /*
-                        if (shaderMode == 0) SetReflection();
-                        if (shaderMode == 1) SetRefraction();
-                        if (shaderMode == 2) SetDespersion();
-                        if (shaderMode == 3) SetFresnal();
-                        */
+                        if (shaderMode == 1) DrawTangentNormals();
+                        if (shaderMode == 2) DrawRGBNormals();
+                        if (shaderMode == 3) DrawBumpMap();
+                        if (shaderMode == 4) DrawBumpReflection();
+                        if (shaderMode == 5) DrawBumpRefraction();
+                        if (shaderMode == 6) SetReflection();
 
                         pass.Apply();
                         GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
@@ -229,7 +237,7 @@ namespace Assignment03V2
                 }
             }
         }
-        private void ImageLoader()
+        private void TextureLoader()
         {
             if (IsKeyPressed(Keys.D1)) texture = Content.Load<Texture2D>("NormalMaps/art");
             if (IsKeyPressed(Keys.D2)) texture = Content.Load<Texture2D>("NormalMaps/BumpTest");
@@ -241,12 +249,49 @@ namespace Assignment03V2
         }
         private void ChangeShader()
         {
-            if (IsKeyPressed(Keys.F1)) { shaderMode = 0; }
-            if (IsKeyPressed(Keys.F2)) { shaderMode = 1; }
-            if (IsKeyPressed(Keys.F3)) { shaderMode = 2; }
-            if (IsKeyPressed(Keys.F4)) { shaderMode = 3; }
-            if (IsKeyPressed(Keys.F5)) { shaderMode = 4; }
-            if (IsKeyPressed(Keys.F6)) { shaderMode = 5; }
+            if (IsKeyPressed(Keys.F1)) 
+            { 
+                shaderMode = 1;
+                shaderName = "Tangent Space";
+                effect = Content.Load<Effect>("TangentSpace");
+            }
+            if (IsKeyPressed(Keys.F2)) 
+            { 
+                shaderMode = 2;
+                shaderName = "RGB World Space";
+                effect = Content.Load<Effect>("WorldSpace");
+
+            }
+            if (IsKeyPressed(Keys.F3)) 
+            { 
+                shaderMode = 3;
+                shaderName = "Bump Map";
+                effect = Content.Load<Effect>("BumpMap");
+            }
+            if (IsKeyPressed(Keys.F4)) 
+            { 
+                shaderMode = 4;
+                shaderName = "Bump Reflection";
+                effect = Content.Load<Effect>("BumpReflection");
+            }
+            if (IsKeyPressed(Keys.F5)) 
+            { 
+                shaderMode = 5;
+                shaderName = "Bump Refraction";
+                effect = Content.Load<Effect>("BumpRefraction");
+            }
+            if (IsKeyPressed(Keys.F6)) 
+            { 
+                shaderMode = 6;
+                shaderName = "Default Reflection";
+                effect = Content.Load<Effect>("Reflection");
+            }
+            if (IsKeyPressed(Keys.F10))
+            {
+                shaderMode = 7;
+                shaderName = "Normal Map";
+                effect = Content.Load<Effect>("ImageNormal");
+            }
 
         }
         private void ValueControls()
@@ -269,16 +314,15 @@ namespace Assignment03V2
             // Defaults
             if (IsKeyPressed(Keys.OemQuestion)) showControls = !showControls;
             if (IsKeyPressed(Keys.H)) showValues = !showValues;
-            if (IsKeyPressed(Keys.F)) ResetValues();
+            if (IsKeyPressed(Keys.R)) ResetValues();
 
         }
         #endregion
 
         #region - Shaders -
-        private void _drawNorm()
+
+        private void DisplayImageNormalMap()
         {
-            shaderName = "Image Normal";
-            effect = Content.Load<Effect>("ImageNormal");
             effect.CurrentTechnique = effect.Techniques[0];
             effect.Parameters["normalMap"].SetValue(texture);
             effect.Parameters["BumpHeight"].SetValue(bumpHeight);
@@ -286,130 +330,109 @@ namespace Assignment03V2
             effect.Parameters["NormalMapRepeatV"].SetValue(normalMapRepeatV);
             effect.Parameters["NormalizeNormalMap"].SetValue(normalizeNormalMap);
             effect.Parameters["MipMap"].SetValue(mipMap);
-            spriteBatch.Begin(0, null, null, null, null, effect);
-            spriteBatch.Draw(texture, new Vector2(0, 0), null, Color.White, 0, Vector2.Zero, 1f, SpriteEffects.None, 0f); // Could be source of error ?????
-            spriteBatch.End();
 
+            spriteBatch.Begin(0, null, null, null, null, effect);
+            spriteBatch.Draw(texture, new Vector2(0,0), null, Color.White, 0, new Vector2(0,0), 1f, SpriteEffects.None, 0f);
+            spriteBatch.End();
         }
-        private void DrawTangentNormal() /// ?????????????????????
+        private void DrawTangentNormals() // DONE
         {
-            shaderName = "Draw Tangent Normal";
-            effect = Content.Load<Effect>("ImageNormal");
-            effect.CurrentTechnique = effect.Techniques[0];
-            effect.Parameters["normalMap"].SetValue(texture);
-            effect.Parameters["BumpHeight"].SetValue(bumpHeight);
+            // TangentSpace.fx
             effect.Parameters["NormalMapRepeatU"].SetValue(normalMapRepeatU);
             effect.Parameters["NormalMapRepeatV"].SetValue(normalMapRepeatV);
+            effect.Parameters["SelfShadow"].SetValue(selfShadow);
+            effect.Parameters["BumpHeight"].SetValue(bumpHeight);
+            effect.Parameters["NormalizeTangentFrame"].SetValue(normalizeTangentFrame);
             effect.Parameters["NormalizeNormalMap"].SetValue(normalizeNormalMap);
             effect.Parameters["MipMap"].SetValue(mipMap);
-            spriteBatch.Begin(0, null, null, null, null, effect);
-            spriteBatch.Draw(texture, new Vector2(0, 0), null, Color.White, 0, Vector2.Zero, 1f, SpriteEffects.None, 0f); // Could be source of error ?????
-            spriteBatch.End();
+            effect.Parameters["normalMap"].SetValue(texture);
 
         }
-        private void DrawWorldNormal() /// ????????????????
+        private void DrawRGBNormals() // DONE
         {
-            shaderName = "Draw World Normal";
-            effect = Content.Load<Effect>("ImageNormal");
-            effect.CurrentTechnique = effect.Techniques[0];
-            effect.Parameters["normalMap"].SetValue(texture);
-            effect.Parameters["BumpHeight"].SetValue(bumpHeight);
+            // TangentSpace.fx
             effect.Parameters["NormalMapRepeatU"].SetValue(normalMapRepeatU);
             effect.Parameters["NormalMapRepeatV"].SetValue(normalMapRepeatV);
+            effect.Parameters["SelfShadow"].SetValue(selfShadow);
+            effect.Parameters["BumpHeight"].SetValue(bumpHeight);
+            effect.Parameters["NormalizeTangentFrame"].SetValue(normalizeTangentFrame);
             effect.Parameters["NormalizeNormalMap"].SetValue(normalizeNormalMap);
             effect.Parameters["MipMap"].SetValue(mipMap);
-            spriteBatch.Begin(0, null, null, null, null, effect);
-            spriteBatch.Draw(texture, new Vector2(0, 0), null, Color.White, 0, Vector2.Zero, 1f, SpriteEffects.None, 0f); // Could be source of error ?????
-            spriteBatch.End();
+            effect.Parameters["normalMap"].SetValue(texture);
 
         }
-        private void _setBumpMap()
+        private void DrawBumpMap() /// ?????????????????????
         {
-            shaderName = "Draw Bump Map";
-            effect = Content.Load<Effect>("BumpMap");
-            effect.CurrentTechnique = effect.Techniques[0];
+            effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+            effect.Parameters["LightPosition"].SetValue(lightPosition);
 
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-            {
-                foreach (ModelMesh mesh in model.Meshes)
-                {
-                    foreach (ModelMeshPart part in mesh.MeshParts)
-                    {
-                        effect.Parameters["World"].SetValue(world);
-                        effect.Parameters["View"].SetValue(view);
-                        effect.Parameters["Projection"].SetValue(projection);
-                        Matrix worldInverseTransposeMatrix = Matrix.Transpose(Matrix.Invert(mesh.ParentBone.Transform));
-                        effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTransposeMatrix);
+            effect.Parameters["NormalMapRepeatU"].SetValue(normalMapRepeatU);
+            effect.Parameters["NormalMapRepeatV"].SetValue(normalMapRepeatV);
+            effect.Parameters["SelfShadow"].SetValue(selfShadow);
+            effect.Parameters["BumpHeight"].SetValue(bumpHeight);
+            effect.Parameters["NormalizeTangentFrame"].SetValue(normalizeTangentFrame);
+            effect.Parameters["NormalizeNormalMap"].SetValue(normalizeNormalMap);
+            effect.Parameters["MipMap"].SetValue(mipMap);
+            effect.Parameters["normalMap"].SetValue(texture);
 
-                        effect.Parameters["BumpHeight"].SetValue(bumpHeight);
-                        effect.Parameters["NormalMapRepeatU"].SetValue(normalMapRepeatU);
-                        effect.Parameters["NormalMapRepeatV"].SetValue(normalMapRepeatV);
-                        effect.Parameters["MipMap"].SetValue(mipMap);
-                        effect.Parameters["NormalizeNormalMap"].SetValue(normalizeNormalMap);
-                        effect.Parameters["NormalizeTangentFrame"].SetValue(normalizeTangentFrame);
+            effect.Parameters["Shininess"].SetValue(100.0f);
+            effect.Parameters["DiffuseIntensity"].SetValue(1.0f);
+            effect.Parameters["DiffuseColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            effect.Parameters["SpecularColorIntensity"].SetValue(0.1f);
+            effect.Parameters["SpecularColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            effect.Parameters["Shininess"].SetValue(100.0f);
 
-                        effect.Parameters["normalMap"].SetValue(texture);
-                        effect.Parameters["LightPosition"].SetValue(lightPosition);
-                        effect.Parameters["CameraPosition"].SetValue(cameraPosition);
-                        effect.Parameters["DiffuseIntensity"].SetValue(1.0f);
-                        effect.Parameters["DiffuseColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                        effect.Parameters["SpecularIntensity"].SetValue(0.1f);
-                        effect.Parameters["SpecularColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                        effect.Parameters["Shininess"].SetValue(100.0f);
 
-                        pass.Apply();
-                        GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
-                        GraphicsDevice.Indices = part.IndexBuffer;
-                        GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, part.VertexOffset, part.StartIndex, part.PrimitiveCount);
-                    }
-                }
-            }
         }
-        private void DrawBumpReflection()
+        private void DrawBumpReflection() /// ????????????????
         {
-            shaderName = "Draw Bump Reflection";
-            effect = Content.Load<Effect>("BumpReflection");
-            effect.CurrentTechnique = effect.Techniques[0];
+            effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+            effect.Parameters["LightPosition"].SetValue(lightPosition);
 
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-            {
-                foreach (ModelMesh mesh in model.Meshes)
-                {
-                    foreach (ModelMeshPart part in mesh.MeshParts)
-                    {
-                        effect.Parameters["World"].SetValue(world);
-                        effect.Parameters["View"].SetValue(view);
-                        effect.Parameters["Projection"].SetValue(projection);
-                        Matrix worldInverseTransposeMatrix = Matrix.Transpose(Matrix.Invert(mesh.ParentBone.Transform));
-                        effect.Parameters["WorldInverseTranspose"].SetValue(worldInverseTransposeMatrix);
+            effect.Parameters["NormalMapRepeatU"].SetValue(normalMapRepeatU);
+            effect.Parameters["NormalMapRepeatV"].SetValue(normalMapRepeatV);
+            effect.Parameters["SelfShadow"].SetValue(selfShadow);
+            effect.Parameters["BumpHeight"].SetValue(bumpHeight);
+            effect.Parameters["NormalizeTangentFrame"].SetValue(normalizeTangentFrame);
+            effect.Parameters["NormalizeNormalMap"].SetValue(normalizeNormalMap);
+            effect.Parameters["MipMap"].SetValue(mipMap);
+            effect.Parameters["normalMap"].SetValue(texture);
+            effect.Parameters["environmentMap"].SetValue(skybox.skyBoxTexture);
 
-                        effect.Parameters["BumpHeight"].SetValue(bumpHeight);
-                        effect.Parameters["NormalMapRepeatU"].SetValue(normalMapRepeatU);
-                        effect.Parameters["NormalMapRepeatV"].SetValue(normalMapRepeatV);
-                        effect.Parameters["MipMap"].SetValue(mipMap);
-                        effect.Parameters["NormalizeNormalMap"].SetValue(normalizeNormalMap);
-                        effect.Parameters["NormalizeTangentFrame"].SetValue(normalizeTangentFrame);
+            effect.Parameters["Shininess"].SetValue(100.0f);
+            effect.Parameters["DiffuseIntensity"].SetValue(1.0f);
+            effect.Parameters["DiffuseColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            effect.Parameters["SpecularColorIntensity"].SetValue(0.1f);
+            effect.Parameters["SpecularColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            effect.Parameters["Shininess"].SetValue(100.0f);
 
-                        effect.Parameters["normalMap"].SetValue(texture);
-                        effect.Parameters["LightPosition"].SetValue(lightPosition);
-                        effect.Parameters["CameraPosition"].SetValue(cameraPosition);
-                        effect.Parameters["DiffuseIntensity"].SetValue(1.0f);
-                        effect.Parameters["DiffuseColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                        effect.Parameters["SpecularIntensity"].SetValue(0.1f);
-                        effect.Parameters["SpecularColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                        effect.Parameters["Shininess"].SetValue(100.0f);
-
-                        pass.Apply();
-                        GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
-                        GraphicsDevice.Indices = part.IndexBuffer;
-                        GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, part.VertexOffset, part.StartIndex, part.PrimitiveCount);
-                    }
-                }
-            }
         }
         private void DrawBumpRefraction()
         {
-            shaderName = "Draw Bump Refraction";
+            effect.Parameters["CameraPosition"].SetValue(cameraPosition);
+            effect.Parameters["LightPosition"].SetValue(lightPosition);
+
+            effect.Parameters["NormalMapRepeatU"].SetValue(normalMapRepeatU);
+            effect.Parameters["NormalMapRepeatV"].SetValue(normalMapRepeatV);
+            effect.Parameters["SelfShadow"].SetValue(selfShadow);
+            effect.Parameters["BumpHeight"].SetValue(bumpHeight);
+            effect.Parameters["NormalizeTangentFrame"].SetValue(normalizeTangentFrame);
+            effect.Parameters["NormalizeNormalMap"].SetValue(normalizeNormalMap);
+            effect.Parameters["MipMap"].SetValue(mipMap);
+            effect.Parameters["normalMap"].SetValue(texture);
+            effect.Parameters["environmentMap"].SetValue(skybox.skyBoxTexture);
+
+            effect.Parameters["Shininess"].SetValue(100.0f);
+            effect.Parameters["DiffuseIntensity"].SetValue(1.0f);
+            effect.Parameters["DiffuseColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            effect.Parameters["SpecularColorIntensity"].SetValue(0.1f);
+            effect.Parameters["SpecularColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            effect.Parameters["Shininess"].SetValue(100.0f);
+        }
+        /*
+        private void DrawBumpRefraction()
+        {
+            shaderName = "Bump Refraction";
 
             effect = Content.Load<Effect>("BumpRefraction");
             effect.CurrentTechnique = effect.Techniques[0];
@@ -438,7 +461,7 @@ namespace Assignment03V2
                         effect.Parameters["CameraPosition"].SetValue(cameraPosition);
                         effect.Parameters["DiffuseIntensity"].SetValue(1.0f);
                         effect.Parameters["DiffuseColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
-                        effect.Parameters["SpecularIntensity"].SetValue(0.1f);
+                        effect.Parameters["SpecularColorIntensity"].SetValue(0.1f);
                         effect.Parameters["SpecularColor"].SetValue(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
                         effect.Parameters["Shininess"].SetValue(100.0f);
 
@@ -450,6 +473,7 @@ namespace Assignment03V2
                 }
             }
         }
+        */
 
         #endregion
 
@@ -460,7 +484,17 @@ namespace Assignment03V2
             int line = 1;
             float leftMargin = 20f;
 
+            spriteBatch.DrawString(font, "Shader = " + shaderName, new Vector2(leftMargin, height * line++), Color.White);
             spriteBatch.DrawString(font, "Texture = " + texture, new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "VALUES = " + showValues, new Vector2(leftMargin, height * line++), Color.White);
+
+            spriteBatch.DrawString(font, "Normal ReapatU = " + normalMapRepeatU, new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Normal ReapatV = " + normalMapRepeatV, new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Bump Height = " + bumpHeight, new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Mip Map = " + mipMap, new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Self Shadow = " + selfShadow, new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Normalize Tangent Frame = " + normalizeTangentFrame, new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Normalize Normal Map = " + normalizeNormalMap, new Vector2(leftMargin, height * line++), Color.White);
             spriteBatch.DrawString(font, "Reset Values: R ", new Vector2(leftMargin, height * line++), Color.White);
 
         } // COMPLETE
@@ -470,14 +504,19 @@ namespace Assignment03V2
             int line = 1;
             float leftMargin = graphics.PreferredBackBufferWidth * 0.75f;
             spriteBatch.DrawString(font, "Change Textures: 1-7 ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Change Shader: F1-F ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Change Normal ReapatU: U/u ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Change Normal ReapatV: V/v ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Change Bump Height: W/w ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Change Mip Map: M ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Change Self Shadow: P ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Normalize Tangent Frame: T ", new Vector2(leftMargin, height * line++), Color.White);
+            spriteBatch.DrawString(font, "Normalize Normal Map: N ", new Vector2(leftMargin, height * line++), Color.White);
             spriteBatch.DrawString(font, "Reset Camera/Light: Enter ", new Vector2(leftMargin, height * line++), Color.White);
         } // COMPLETE
         void ResetValues()
-        {
-            angle = angle2 = angleL = angleL2 = 0;
-            distance = 30;
-            cameraPosition = new Vector3(0, 0, 0);
-            normalizeTangentFrame = normalizeNormalMap = mipMap = 0;
+        { 
+            normalizeTangentFrame = normalizeNormalMap = mipMap = mipMap = selfShadow = 0;
             normalMapRepeatU = normalMapRepeatV = bumpHeight = 1.0f;
         }  // COMPLETE
 

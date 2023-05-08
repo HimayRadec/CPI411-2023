@@ -1,4 +1,9 @@
-﻿float NormalMapRepeatU;
+﻿float4x4 World;
+float4x4 View;
+float4x4 Projection;
+float4x4 WorldInverseTranspose;
+
+float NormalMapRepeatU;
 float NormalMapRepeatV;
 int SelfShadow;
 float BumpHeight;
@@ -6,7 +11,6 @@ int NormalizeTangentFrame;
 int NormalizeNormalMap;
 int MipMap;
 texture normalMap;
-
 
 sampler NormalMapSamplerLinear = sampler_state
 {

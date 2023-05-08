@@ -21,8 +21,9 @@ float BumpHeight;
 int NormalizeTangentFrame;
 int NormalizeNormalMap;
 int MipMap;
+texture environmentMap;
+texture normalMap;
 
-texture normapMap;
 samplerCUBE SkyBoxSampler = sampler_state
 {
     texture = <environmentMap>;
@@ -99,8 +100,8 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
     output.TexCoord.xy *= float2(NormalMapRepeatU, NormalMapRepeatV);
     output.Position3D = worldPosition.xyz; // ???????????????
     
-    
     return output;
+   
 }
 
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0

@@ -1,11 +1,7 @@
 ﻿float4x4 World;
 float4x4 View;
 float4x4 Projection;
-
-float windActive;
-
-// See the following links:
-// http://http.developer.nvidia.com/GPUGems3/gpugems3_ch16.html 
+float windActive; 
 
 texture Texture : register(t0);
 sampler TheSampler : register(s0) = sampler_state
